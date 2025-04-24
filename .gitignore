@@ -1,3 +1,9 @@
+# Environment files
+.env.*
+
+# Firebase service account keys
+src/main/resources/firebase/*.json
+
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
