@@ -1,5 +1,8 @@
-# Environment files
-.env.*
+# Property files
+/src/main/resources/application-dev.properties
+/src/main/resources/application-prod.properties
+/src/main/resources/application-stage.properties
+/src/main/resources/application-test.properties
 
 # Firebase service account keys
 src/main/resources/firebase/*.json
