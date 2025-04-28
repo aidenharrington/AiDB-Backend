@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.service.api;
 
 import com.aidb.aidb_backend.config.FirebaseConfig;
+import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.service.firestore.QueryService;
 import org.slf4j.Logger;
@@ -18,23 +19,27 @@ import java.util.Map;
 @Service
 public class QueryTranslatorService {
 
-    @Autowired
-    private QueryService queryService;
-
-    @Value("${OPENAI_API_KEY}")
-    private String openAiKey;
-
-    @Value("${OPENAI_API_URL}")
-    private String openAiUrl;
-
-    @Value("${OPENAI_API_MODEL}")
-    private String openAiModel;
-
-    @Value("${OPENAI_API_TEMPERATURE}")
-    private double openAiTemp;
-
     private static final Logger logger = LoggerFactory.getLogger(FirebaseConfig.class);
 
+    private final QueryService queryService;
+    private final String openAiKey;
+    private final String openAiUrl;
+    private final String openAiModel;
+    private final double openAiTemp;
+
+    @Autowired
+    public QueryTranslatorService(
+            QueryService queryService,
+            @Value("${OPENAI_API_KEY}") String openAiKey,
+            @Value("${OPENAI_API_URL}") String openAiUrl,
+            @Value("${OPENAI_API_MODEL}") String openAiModel,
+            @Value("${OPENAI_API_TEMPERATURE}") double openAiTemp) {
+        this.queryService = queryService;
+        this.openAiKey = openAiKey;
+        this.openAiUrl = openAiUrl;
+        this.openAiModel = openAiModel;
+        this.openAiTemp = openAiTemp;
+    }
 
     public Query translateToSql(String userId, String nlQuery) {
         Query query = new Query();
@@ -50,7 +55,7 @@ public class QueryTranslatorService {
     }
 
     private String getOpenAiSqlTranslation(String nlQuery) {
-        RestTemplate restTemplate = new RestTemplate();
+        RestTemplate restTemplate = createRestTemplate();
 
         // TODO: remove hardcoding
         Map<String, Object> message = Map.of(
@@ -70,11 +75,30 @@ public class QueryTranslatorService {
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
-        ResponseEntity<Map> response = restTemplate.exchange(openAiUrl, HttpMethod.POST, request, Map.class);
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(openAiUrl, HttpMethod.POST, request, Map.class);
 
-        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
-        Map<String, Object> messageMap = (Map<String, Object>) choices.get(0).get("message");
-        return (String) messageMap.get("content");
+            if (response.getBody() == null) {
+                throw new OpenAiApiException("OpenAI API returned a null body", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+            if (choices == null || choices.isEmpty()) {
+                throw new OpenAiApiException("No choices in OpenAI response", HttpStatus.BAD_REQUEST);
+            }
+
+            Map<String, Object> messageMap = (Map<String, Object>) choices.get(0).get("message");
+            if (messageMap == null) {
+                throw new OpenAiApiException("No message field in OpenAI response", HttpStatus.BAD_REQUEST);
+            }
+
+            return (String) messageMap.get("content");
+
+        } catch (OpenAiApiException e) {
+            throw e; // Propagate custom exception
+        } catch (Exception e) {
+            throw new OpenAiApiException("Error fetching SQL translation from OpenAI", HttpStatus.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     private void saveQuery(Query query) {
@@ -83,6 +107,10 @@ public class QueryTranslatorService {
         } catch (Exception e) {
             logger.error("{}{}", "Failed saving query gracefully.", e.getMessage());
         }
+    }
+
+    protected RestTemplate createRestTemplate() {
+        return new RestTemplate();
     }
 
 }

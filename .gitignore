@@ -8,10 +8,13 @@
 src/main/resources/firebase/*.json
 
 HELP.md
+src/main/java/com/aidb/aidb_backend/.DS_Store
+src/main/java/com/aidb/aidb_backend/model/firestore/.DS_Store
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
 
 ### STS ###
 .apt_generated
