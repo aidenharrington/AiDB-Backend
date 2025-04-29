@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.exception;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -17,5 +18,6 @@ public class ExcelValidationException extends RuntimeException {
         super(message, cause);
         this.httpStatus = httpStatus;
     }
+
 
 }
