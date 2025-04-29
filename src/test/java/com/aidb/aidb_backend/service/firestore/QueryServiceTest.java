@@ -1,13 +1,12 @@
 package com.aidb.aidb_backend.service.firestore;
 
 import com.aidb.aidb_backend.model.firestore.Query;
+import com.aidb.aidb_backend.service.database.firestore.QueryService;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

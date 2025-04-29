@@ -2,11 +2,9 @@ package com.aidb.aidb_backend.service.api;
 
 import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.model.firestore.Query;
-import com.aidb.aidb_backend.service.api.QueryTranslatorService;
-import com.aidb.aidb_backend.service.firestore.QueryService;
+import com.aidb.aidb_backend.service.database.firestore.QueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 

@@ -1,6 +1,5 @@
-package com.aidb.aidb_backend.service.firestore;
+package com.aidb.aidb_backend.service.database.firestore;
 
-import com.aidb.aidb_backend.config.FirebaseConfig;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
@@ -21,7 +20,7 @@ public class QueryService {
     @Autowired
     private Firestore firestore;
 
-    private static final Logger logger = LoggerFactory.getLogger(FirebaseConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(QueryService.class);
 
     private static final String QUERY_COLLECTION  = "queries";
 

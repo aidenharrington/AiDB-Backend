@@ -25,7 +25,7 @@ public class QueryTranslatorController {
     @Autowired
     private FirebaseAuthService firebaseAuthService;
 
-    private static final Logger logger = LoggerFactory.getLogger(FirebaseConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(QueryTranslatorController.class);
 
     @PostMapping("/translate")
     public ResponseEntity<String> generateSql(@RequestBody String nlQuery) {

@@ -1,9 +1,8 @@
 package com.aidb.aidb_backend.service.api;
 
-import com.aidb.aidb_backend.config.FirebaseConfig;
 import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.model.firestore.Query;
-import com.aidb.aidb_backend.service.firestore.QueryService;
+import com.aidb.aidb_backend.service.database.firestore.QueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +18,7 @@ import java.util.Map;
 @Service
 public class QueryTranslatorService {
 
-    private static final Logger logger = LoggerFactory.getLogger(FirebaseConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(QueryTranslatorService.class);
 
     private final QueryService queryService;
     private final String openAiKey;
@@ -57,7 +56,7 @@ public class QueryTranslatorService {
     private String getOpenAiSqlTranslation(String nlQuery) {
         RestTemplate restTemplate = createRestTemplate();
 
-        // TODO: remove hardcoding
+        // TODO - MVP: remove hardcoding
         Map<String, Object> message = Map.of(
                 "role", "user",
                 "content", "Translate this natural language query to SQL: " + nlQuery
