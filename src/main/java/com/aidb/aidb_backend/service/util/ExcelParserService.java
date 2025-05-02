@@ -1,17 +1,19 @@
 package com.aidb.aidb_backend.service.util;
 
-import com.aidb.aidb_backend.exception.ExcelValidationException;
 import com.aidb.aidb_backend.model.dto.ExcelDataDto;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class ExcelParserService {
@@ -39,7 +41,7 @@ public class ExcelParserService {
 
     private ExcelDataDto.TableDto createTable(Sheet sheet) {
         ExcelDataDto.TableDto table = new ExcelDataDto.TableDto();
-        String name = formatData(sheet.getSheetName());
+        String name = ExcelSanitizerService.formatString(sheet.getSheetName());
         table.setName(name);
 
         List<ExcelDataDto.ColumnDto> columns = parseColumns(sheet);
@@ -57,9 +59,9 @@ public class ExcelParserService {
             Cell cell = headerIterator.next();
             ExcelDataDto.ColumnDto column = new ExcelDataDto.ColumnDto();
 
-            String name = formatData(cell.getStringCellValue());
+            String name = ExcelSanitizerService.formatColumnName(cell.getStringCellValue());
             column.setName(name);
-            column.setType(inferColumnType(cell));
+            column.setType(inferColumnType(sheet, cell));
             columns.add(column);
         }
 
@@ -85,18 +87,17 @@ public class ExcelParserService {
         return rows;
     }
 
-    private ExcelDataDto.ColumnTypeDto inferColumnType(Cell cell) {
-        if (cell.getCellType() == CellType.STRING) {
-            return ExcelDataDto.ColumnTypeDto.TEXT;
-        } else if (cell.getCellType() == CellType.NUMERIC) {
-            if (DateUtil.isCellDateFormatted(cell)) {
-                return ExcelDataDto.ColumnTypeDto.DATE;
-            } else {
-                return ExcelDataDto.ColumnTypeDto.NUMBER;
-            }
-        } else {
+    private ExcelDataDto.ColumnTypeDto inferColumnType(Sheet sheet, Cell columnCell) {
+
+        // Check the cell below the column to determine column type
+        Cell firstDataCell = getCell(sheet, columnCell.getRowIndex() + 1, columnCell.getColumnIndex());
+
+        if (firstDataCell == null) {
             return ExcelDataDto.ColumnTypeDto.TEXT;
         }
+
+
+        return inferCellType(firstDataCell);
     }
 
     private Object getCellValue(Cell cell) {
@@ -104,45 +105,33 @@ public class ExcelParserService {
             return null;
         }
 
-        switch (cell.getCellType()) {
-            case STRING:
-                return formatData(cell.getStringCellValue());
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getDateCellValue();
-                } else {
-                    return cell.getNumericCellValue();
-                }
-            default:
-                return null;
-        }
+        ExcelDataDto.ColumnTypeDto cellType = inferCellType(cell);
+
+        return switch (cellType) {
+            case TEXT -> ExcelSanitizerService.formatString(cell.getStringCellValue());
+            case DATE -> ExcelSanitizerService.formatDate(cell.getDateCellValue());
+            case NUMBER -> cell.getNumericCellValue();
+        };
     }
 
-    private String formatData(String value) {
-        if (value == null) {
-            return null;
-        }
-
-        // Remove leading/trailing whitespaces
-        String sanitizedValue = value.trim();
-
-        // Replaces spaces with underscores
-        sanitizedValue = sanitizedValue.replace(" ", "_");
-
-        // Throw an error if sanitized value is empty or contains invalid characters
-        if (sanitizedValue.isEmpty() || !sanitizedValue.matches("^[a-zA-Z0-9_]*$")) {
-            String message = "Illegal character in cell: " + sanitizedValue;
-            throw new ExcelValidationException(message, HttpStatus.UNPROCESSABLE_ENTITY);
-        }
-
-        return sanitizedValue;
+    private Cell getCell(Sheet sheet, int rowIndex, int colIndex) {
+        Row row = sheet.getRow(rowIndex);
+        return row != null ? row.getCell(colIndex) : null;
     }
 
-    private Object formatData(Object value) {
-        if (value instanceof String) {
-            return formatData((String) value);
+    private ExcelDataDto.ColumnTypeDto inferCellType(Cell cell) {
+        if (cell == null) {
+            return ExcelDataDto.ColumnTypeDto.TEXT;
         }
-        return value;
+
+        if (Objects.requireNonNull(cell.getCellType()) == CellType.NUMERIC) {
+            if (DateUtil.isCellDateFormatted(cell)) {
+                return ExcelDataDto.ColumnTypeDto.DATE;
+            } else {
+                return ExcelDataDto.ColumnTypeDto.NUMBER;
+            }
+        }
+        return ExcelDataDto.ColumnTypeDto.TEXT;
     }
 
 }

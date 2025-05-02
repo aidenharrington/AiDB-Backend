@@ -12,13 +12,13 @@ public class ExcelDataValidatorService {
 
     public void validateData(ExcelDataDto excelData) {
         for (ExcelDataDto.TableDto table : excelData.getTables()) {
-            for (int i = 0; i < table.getRows().size(); i++) {
-                List<Object> row = table.getRows().get(i);
-                for (int j = 0; j < row.size(); j++) {
-                    Object cellValue = row.get(j);
-                    ExcelDataDto.ColumnTypeDto columnType = table.getColumns().get(j).getType();
+            for (int rowIdx = 1; rowIdx < table.getRows().size(); rowIdx++) {
+                List<Object> row = table.getRows().get(rowIdx);
+                for (int colIdx = 0; colIdx < row.size(); colIdx++) {
+                    Object cellValue = row.get(colIdx);
+                    ExcelDataDto.ColumnTypeDto columnType = table.getColumns().get(colIdx).getType();
                     if (!validateCell(cellValue, columnType)) {
-                        String message = "Validation failed for row " + i + ", column " + j;
+                        String message = "Validation failed for row " + rowIdx + ", column " + colIdx;
                         throw new ExcelValidationException(message, HttpStatus.UNPROCESSABLE_ENTITY);
                     }
                 }

@@ -72,17 +72,11 @@ public class UserFileDataService {
     }
 
     private String mapColumnTypeToSqlType(ExcelDataDto.ColumnTypeDto columnType) {
-        switch (columnType) {
-            case TEXT:
-                return "TEXT";
-            case NUMBER:
-                return "DOUBLE PRECISION";
-            case DATE:
-                return "DATE";
-            case ID:
-                return "SERIAL PRIMARY KEY";
-            default:
-                throw new IllegalArgumentException("Unknown column type: " + columnType);
-        }
+        return switch (columnType) {
+            case TEXT -> "TEXT";
+            case NUMBER -> "DOUBLE PRECISION";
+            case DATE -> "DATE";
+            default -> throw new IllegalArgumentException("Unknown column type: " + columnType);
+        };
     }
 }

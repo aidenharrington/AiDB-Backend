@@ -26,7 +26,7 @@ public class ExcelDataDto {
     public enum ColumnTypeDto {
         TEXT,
         NUMBER,
-        DATE,
-        ID
+        // Date is stored in user's timezone
+        DATE
     }
 }
