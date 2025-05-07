@@ -32,13 +32,13 @@ public class ExcelController {
     private static final Logger logger = LoggerFactory.getLogger(ExcelController.class);
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadCsv(@RequestParam("file")MultipartFile file){
+    public ResponseEntity<Object> uploadExcel(@RequestParam("file")MultipartFile file){
         try {
             ExcelDataDto excelData = parserService.parseExcelFile(file.getInputStream());
             dataValidatorService.validateData(excelData);
             userInputService.createTablesAndInsertData(excelData);
 
-            return ResponseEntity.ok("Excel file processed successfully.");
+            return ResponseEntity.ok(excelData);
         } catch (ExcelValidationException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
             return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
