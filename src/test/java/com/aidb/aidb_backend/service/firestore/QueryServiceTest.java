@@ -47,7 +47,7 @@ class QueryServiceTest {
     }
 
     @Test
-    void testGetQuery_queryExists() throws Exception {
+    void testGetQuery_queryByIdExists() throws Exception {
         // Arrange
         String queryId = "query-id";
         CollectionReference collectionReference = mock(CollectionReference.class);
@@ -64,7 +64,7 @@ class QueryServiceTest {
         when(documentSnapshot.toObject(Query.class)).thenReturn(expectedQuery);
 
         // Act
-        Query actualQuery = queryService.getQuery(queryId);
+        Query actualQuery = queryService.getQueryById(queryId);
 
         // Assert
         assertNotNull(actualQuery);
@@ -72,7 +72,7 @@ class QueryServiceTest {
     }
 
     @Test
-    void testGetQuery_queryDoesNotExist() throws Exception {
+    void testGetQuery_queryByIdDoesNotExist() throws Exception {
         // Arrange
         String queryId = "nonexistent-id";
         CollectionReference collectionReference = mock(CollectionReference.class);
@@ -87,7 +87,7 @@ class QueryServiceTest {
         when(documentSnapshot.exists()).thenReturn(false);
 
         // Act
-        Query actualQuery = queryService.getQuery(queryId);
+        Query actualQuery = queryService.getQueryById(queryId);
 
         // Assert
         assertNull(actualQuery);

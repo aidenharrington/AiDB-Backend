@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.service.api;
 
 import com.aidb.aidb_backend.exception.OpenAiApiException;
+import com.aidb.aidb_backend.exception.UnauthorizedException;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.service.database.firestore.QueryService;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Service
 public class QueryTranslatorService {
@@ -51,6 +53,20 @@ public class QueryTranslatorService {
         saveQuery(query);
 
         return query;
+    }
+
+    public List<Query> getAllQueries(String userId) throws ExecutionException, InterruptedException {
+        return queryService.getAllQueries(userId);
+    }
+
+    public Query getQueryById(String queryId, String userId) throws ExecutionException, InterruptedException {
+        Query query = queryService.getQueryById(queryId);
+
+        if (query != null && query.getUserId().equalsIgnoreCase(userId)) {
+            return query;
+        } else {
+            throw new UnauthorizedException("Not authorized to access query", HttpStatus.FORBIDDEN);
+        }
     }
 
     private String getOpenAiSqlTranslation(String nlQuery) {
