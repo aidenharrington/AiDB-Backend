@@ -10,8 +10,6 @@ import java.util.List;
 @Service
 public class UserFileDataService {
 
-    // TODO - Skeleton - use docker database
-
     @Autowired
     private JdbcTemplate jdbcTemplate;
 

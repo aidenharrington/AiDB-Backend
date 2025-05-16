@@ -1,11 +1,12 @@
 package com.aidb.aidb_backend.controller;
 
-import com.aidb.aidb_backend.config.FirebaseConfig;
+import com.aidb.aidb_backend.exception.IllegalSqlException;
 import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.exception.UnauthorizedException;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
 import com.aidb.aidb_backend.service.api.QueryTranslatorService;
+import com.aidb.aidb_backend.service.util.sql.UserQueryProcessorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,24 +15,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/query-translator")
-public class QueryTranslatorController {
+@RequestMapping("/queries")
+public class QueryController {
 
     @Autowired
     private QueryTranslatorService queryTranslatorService;
 
     @Autowired
+    private UserQueryProcessorService userQueryProcessorService;
+
+    @Autowired
     private FirebaseAuthService firebaseAuthService;
 
-    private static final Logger logger = LoggerFactory.getLogger(QueryTranslatorController.class);
+    private static final Logger logger = LoggerFactory.getLogger(QueryController.class);
 
     @PostMapping("/translate")
     public ResponseEntity<String> generateSql(@RequestBody String nlQuery) {
         try {
             String userId = firebaseAuthService.getUserIdPlaceholder();
-            Query sqlQuery = queryTranslatorService.translateToSql(nlQuery, userId);
+            Query sqlQuery = queryTranslatorService.translateToSql(userId, nlQuery);
             return ResponseEntity.ok(sqlQuery.getSqlQuery());
         } catch (OpenAiApiException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
@@ -42,7 +47,23 @@ public class QueryTranslatorController {
         }
     }
 
-    @GetMapping("/queries")
+    @PostMapping
+    public ResponseEntity<Object> executeSql(@RequestBody String sqlQuery) {
+        try {
+            System.out.println(sqlQuery);
+            String userId = firebaseAuthService.getUserIdPlaceholder();
+            List<Map<String, Object>> queryResult = userQueryProcessorService.executeSafeSelectQuery(sqlQuery);
+            return ResponseEntity.ok(queryResult);
+        } catch (IllegalSqlException e) {
+            logger.error(e.getMessage(), e.getHttpStatus());
+            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping
     public ResponseEntity<Object> getAllQueries() {
         try {
             String userId = firebaseAuthService.getUserIdPlaceholder();
@@ -54,7 +75,7 @@ public class QueryTranslatorController {
         }
     }
 
-    @GetMapping("/queries/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Object> getQueryById(@PathVariable String id) {
         try {
             String userId = firebaseAuthService.getUserIdPlaceholder();
@@ -68,5 +89,6 @@ public class QueryTranslatorController {
             return new ResponseEntity<>("Unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
 }

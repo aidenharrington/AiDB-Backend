@@ -3,8 +3,8 @@ package com.aidb.aidb_backend.controller;
 import com.aidb.aidb_backend.exception.ExcelValidationException;
 import com.aidb.aidb_backend.model.dto.ExcelDataDto;
 import com.aidb.aidb_backend.service.database.postgres.UserFileDataService;
-import com.aidb.aidb_backend.service.util.ExcelDataValidatorService;
-import com.aidb.aidb_backend.service.util.ExcelParserService;
+import com.aidb.aidb_backend.service.util.excel.ExcelDataValidatorService;
+import com.aidb.aidb_backend.service.util.excel.ExcelParserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class ExcelController {
     ExcelParserService parserService;
 
     @Autowired
-    UserFileDataService userInputService;
+    UserFileDataService userFileDataService;
 
     private static final Logger logger = LoggerFactory.getLogger(ExcelController.class);
 
@@ -36,7 +36,7 @@ public class ExcelController {
         try {
             ExcelDataDto excelData = parserService.parseExcelFile(file.getInputStream());
             dataValidatorService.validateData(excelData);
-            userInputService.createTablesAndInsertData(excelData);
+            userFileDataService.createTablesAndInsertData(excelData);
 
             return ResponseEntity.ok(excelData);
         } catch (ExcelValidationException e) {

@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 @Configuration
-public class JdbcConfig {
+public class AdminJdbcConfig {
 
     @Value("${spring.datasource.url}")
     private String dataSourceUrl;

@@ -47,7 +47,9 @@ public class QueryTranslatorService {
         query.setUserId(userId);
         query.setNlQuery(nlQuery);
 
+        // TODO - MVP - re-add
         String sqlQuery = getOpenAiSqlTranslation(nlQuery);
+        //String sqlQuery = "This is mock SQL for: " + nlQuery;
         query.setSqlQuery(sqlQuery);
 
         saveQuery(query);
