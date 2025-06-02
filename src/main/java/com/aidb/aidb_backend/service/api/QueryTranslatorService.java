@@ -2,6 +2,7 @@ package com.aidb.aidb_backend.service.api;
 
 import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.exception.UnauthorizedException;
+import com.aidb.aidb_backend.model.dto.QueryDto;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.service.database.firestore.QueryService;
 import org.slf4j.Logger;
@@ -47,9 +48,7 @@ public class QueryTranslatorService {
         query.setUserId(userId);
         query.setNlQuery(nlQuery);
 
-        // TODO - MVP - re-add
         String sqlQuery = getOpenAiSqlTranslation(nlQuery);
-        //String sqlQuery = "This is mock SQL for: " + nlQuery;
         query.setSqlQuery(sqlQuery);
 
         saveQuery(query);
@@ -57,8 +56,8 @@ public class QueryTranslatorService {
         return query;
     }
 
-    public List<Query> getAllQueries(String userId) throws ExecutionException, InterruptedException {
-        return queryService.getAllQueries(userId);
+    public List<QueryDto> getAllQueryDtos(String userId) throws ExecutionException, InterruptedException {
+        return queryService.getAllQueryDtos(userId);
     }
 
     public Query getQueryById(String queryId, String userId) throws ExecutionException, InterruptedException {
