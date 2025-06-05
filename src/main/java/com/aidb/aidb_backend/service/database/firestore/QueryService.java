@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.google.cloud.firestore.Query.Direction.DESCENDING;
+
 @Service
 public class QueryService {
 
@@ -23,7 +25,8 @@ public class QueryService {
     private static final Logger logger = LoggerFactory.getLogger(QueryService.class);
 
     private static final String QUERY_COLLECTION  = "queries";
-    private static final String USER_ID = "user_id";
+    private static final String USER_ID = "userId";
+    private static final String TIMESTAMP = "timestamp";
 
     public String addQuery(Query query) throws ExecutionException, InterruptedException {
         DocumentReference docRef = firestore.collection(QUERY_COLLECTION).document();
@@ -40,7 +43,10 @@ public class QueryService {
 
     public List<QueryDto> getAllQueryDtos(String userId) throws ExecutionException, InterruptedException {
         CollectionReference queriesRef = firestore.collection(QUERY_COLLECTION);
-        ApiFuture<QuerySnapshot> future = queriesRef.whereEqualTo(USER_ID, userId).get();
+        ApiFuture<QuerySnapshot> future = queriesRef
+                .whereEqualTo(USER_ID, userId)
+                .orderBy(TIMESTAMP, DESCENDING)
+                .get();
         List<QueryDocumentSnapshot> documents = future.get().getDocuments();
 
         List<QueryDto> results = new ArrayList<>();

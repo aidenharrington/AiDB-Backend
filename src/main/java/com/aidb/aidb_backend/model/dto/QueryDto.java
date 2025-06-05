@@ -9,17 +9,24 @@ import com.google.cloud.Timestamp;
 public class QueryDto {
     private String nlQuery;
     private String sqlQuery;
-    private Timestamp timestamp;
+    private String timestamp;
 
     public QueryDto(String nlQuery, String sqlQuery, Timestamp timestamp) {
         this.nlQuery = nlQuery;
         this.sqlQuery = sqlQuery;
-        this.timestamp = timestamp;
+        this.timestamp = formatTimestamp(timestamp);
     }
 
     public QueryDto(Query query) {
         this.nlQuery = query.getNlQuery();
         this.sqlQuery = query.getSqlQuery();
-        this.timestamp = query.getTimestamp();
+        this.timestamp = formatTimestamp(query.getTimestamp());
+    }
+
+    private String formatTimestamp(Timestamp timestamp) {
+        return timestamp
+                .toDate()
+                .toInstant()
+                .toString();
     }
 }
