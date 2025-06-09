@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.service.util.sql;
 
 import com.aidb.aidb_backend.exception.IllegalSqlException;
+import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.service.database.postgres.UserQueryDataService;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;

@@ -1,7 +1,7 @@
 package com.aidb.aidb_backend.service.util.excel;
 
 import com.aidb.aidb_backend.exception.ExcelValidationException;
-import com.aidb.aidb_backend.service.util.SqlKeywords;
+import com.aidb.aidb_backend.service.util.sql.SqlKeywords;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 

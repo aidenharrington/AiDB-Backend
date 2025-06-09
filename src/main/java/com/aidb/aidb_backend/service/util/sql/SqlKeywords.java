@@ -1,4 +1,4 @@
-package com.aidb.aidb_backend.service.util;
+package com.aidb.aidb_backend.service.util.sql;
 
 import java.util.Arrays;
 import java.util.HashSet;
