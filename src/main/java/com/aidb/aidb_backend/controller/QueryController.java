@@ -2,7 +2,8 @@ package com.aidb.aidb_backend.controller;
 
 import com.aidb.aidb_backend.exception.IllegalSqlException;
 import com.aidb.aidb_backend.exception.OpenAiApiException;
-import com.aidb.aidb_backend.exception.UnauthorizedException;
+import com.aidb.aidb_backend.exception.http.ForbiddenException;
+import com.aidb.aidb_backend.exception.http.HttpException;
 import com.aidb.aidb_backend.model.dto.QueryDto;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
@@ -65,11 +66,14 @@ public class QueryController {
     }
 
     @GetMapping
-    public ResponseEntity<Object> getAllQueries() {
+    public ResponseEntity<Object> getAllQueries(@RequestHeader("Authorization") String authToken) {
         try {
-            String userId = firebaseAuthService.getUserIdPlaceholder();
+            String userId = firebaseAuthService.authorizeUser(authToken);
             List<QueryDto> queries = queryTranslatorService.getAllQueryDtos(userId);
             return ResponseEntity.ok(queries);
+        } catch (HttpException e) {
+            logger.error(e.getMessage(), e.getHttpStatus());
+            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
         } catch (Exception e) {
             logger.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             return new ResponseEntity<>("Unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -82,7 +86,7 @@ public class QueryController {
             String userId = firebaseAuthService.getUserIdPlaceholder();
             Query query = queryTranslatorService.getQueryById(id, userId);
             return ResponseEntity.ok(query);
-        } catch (UnauthorizedException e) {
+        } catch (ForbiddenException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
             return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
         } catch (Exception e) {

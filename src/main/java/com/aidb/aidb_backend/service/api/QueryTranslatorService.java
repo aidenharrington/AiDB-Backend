@@ -1,7 +1,7 @@
 package com.aidb.aidb_backend.service.api;
 
 import com.aidb.aidb_backend.exception.OpenAiApiException;
-import com.aidb.aidb_backend.exception.UnauthorizedException;
+import com.aidb.aidb_backend.exception.http.ForbiddenException;
 import com.aidb.aidb_backend.model.dto.QueryDto;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.service.database.firestore.QueryService;
@@ -66,7 +66,7 @@ public class QueryTranslatorService {
         if (query != null && query.getUserId().equalsIgnoreCase(userId)) {
             return query;
         } else {
-            throw new UnauthorizedException("Not authorized to access query", HttpStatus.FORBIDDEN);
+            throw new ForbiddenException("Not authorized to access query");
         }
     }
 
