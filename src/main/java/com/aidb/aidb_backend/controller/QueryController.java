@@ -69,6 +69,8 @@ public class QueryController {
     public ResponseEntity<Object> getAllQueries(@RequestHeader("Authorization") String authToken) {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
+            // TODO - Now - Remove
+            System.out.println("Authenticated user: " + userId);
             List<QueryDto> queries = queryTranslatorService.getAllQueryDtos(userId);
             return ResponseEntity.ok(queries);
         } catch (HttpException e) {
