@@ -2,6 +2,7 @@ package com.aidb.aidb_backend.service.api;
 
 import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.model.firestore.Query;
+import com.aidb.aidb_backend.orchestrator.QueryTranslatorOrchestrator;
 import com.aidb.aidb_backend.service.database.firestore.QueryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,9 +18,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class QueryTranslatorServiceTest {
+class QueryTranslatorOrchestratorTest {
 
-    private QueryTranslatorService queryTranslatorService;
+    private QueryTranslatorOrchestrator queryTranslatorOrchestrator;
     private QueryService queryService;
     private RestTemplate restTemplate;
 
@@ -29,7 +30,7 @@ class QueryTranslatorServiceTest {
         restTemplate = mock(RestTemplate.class);
 
         // Create service instance with constructor injection
-        queryTranslatorService = new QueryTranslatorService(
+        queryTranslatorOrchestrator = new QueryTranslatorOrchestrator(
                 queryService,
                 "fake-key",
                 "http://fake-url.com",
@@ -73,7 +74,7 @@ class QueryTranslatorServiceTest {
 
         try {
             // Call method under test
-            Query result = queryTranslatorService.translateToSql("user123", "Get all users");
+            Query result = queryTranslatorOrchestrator.translateToSql("user123", "Get all users");
 
             // Assertions
             assertEquals("user123", result.getUserId());
@@ -103,7 +104,7 @@ class QueryTranslatorServiceTest {
 
         try {
             // Call method under test
-            Query result = queryTranslatorService.translateToSql("user123", "Get all users");
+            Query result = queryTranslatorOrchestrator.translateToSql("user123", "Get all users");
 
             // Assertions: Assert that the query translation returned null for the SQL query
             assertNull(result.getSqlQuery(), "SQL query should be null on error");
@@ -133,7 +134,7 @@ class QueryTranslatorServiceTest {
 
         try {
             // Call method under test
-            Query result = queryTranslatorService.translateToSql("user123", "Get all users");
+            Query result = queryTranslatorOrchestrator.translateToSql("user123", "Get all users");
 
             // Assertions
             assertNull(result.getSqlQuery(), "SQL query should be null for invalid OpenAI response");
@@ -149,7 +150,7 @@ class QueryTranslatorServiceTest {
     }
 
     @Test
-    void testTranslateToSql_SaveQueryError() {
+    void testTranslateToSql_SaveQueryGracefullyError() {
         // Mock the OpenAI API response
         Map<String, Object> messageMap = new HashMap<>();
         messageMap.put("content", "SELECT * FROM users;");
@@ -178,7 +179,7 @@ class QueryTranslatorServiceTest {
 
         try {
             // Call method under test
-            Query result = queryTranslatorService.translateToSql("user123", "Get all users");
+            Query result = queryTranslatorOrchestrator.translateToSql("user123", "Get all users");
 
             // Assertions
             assertEquals("user123", result.getUserId());

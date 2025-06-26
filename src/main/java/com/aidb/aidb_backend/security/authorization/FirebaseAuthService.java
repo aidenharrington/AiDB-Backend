@@ -8,9 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class FirebaseAuthService {
-    public String getUserIdPlaceholder() {
-        return "1234";
-    }
+
 
     public String authorizeUser(String authToken) {
         try {

@@ -36,6 +36,29 @@ public class QueryService {
         return docRef.getId();
     }
 
+    public String addOrUpdateQuery(Query query) throws ExecutionException, InterruptedException {
+        String queryId = query.getId();
+
+        if (queryId != null && !queryId.isEmpty()) {
+            DocumentReference docRef = firestore.collection(QUERY_COLLECTION).document(queryId);
+            ApiFuture<DocumentSnapshot> docSnapFuture = docRef.get();
+            DocumentSnapshot docSnap = docSnapFuture.get();
+
+            if (docSnap.exists()) {
+                ApiFuture<WriteResult> writeResult = docRef.set(query);
+                writeResult.get();
+                return queryId;
+            }
+        }
+
+        // Create new document
+        query.setTimestamp(Timestamp.now());
+        DocumentReference newDocRef = firestore.collection(QUERY_COLLECTION).document();
+        ApiFuture<WriteResult> writeResult = newDocRef.set(query);
+        writeResult.get();
+        return newDocRef.getId();
+    }
+
     public Query getQueryById(String id) throws ExecutionException, InterruptedException {
         DocumentSnapshot snapshot = firestore.collection(QUERY_COLLECTION).document(id).get().get();
         return snapshot.exists() ? snapshot.toObject(Query.class) : null;

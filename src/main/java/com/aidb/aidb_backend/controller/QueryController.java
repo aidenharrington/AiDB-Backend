@@ -2,13 +2,12 @@ package com.aidb.aidb_backend.controller;
 
 import com.aidb.aidb_backend.exception.IllegalSqlException;
 import com.aidb.aidb_backend.exception.OpenAiApiException;
-import com.aidb.aidb_backend.exception.http.ForbiddenException;
 import com.aidb.aidb_backend.exception.http.HttpException;
 import com.aidb.aidb_backend.model.dto.QueryDto;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
-import com.aidb.aidb_backend.service.api.QueryTranslatorService;
-import com.aidb.aidb_backend.service.util.sql.UserQueryProcessorService;
+import com.aidb.aidb_backend.orchestrator.QueryTranslatorOrchestrator;
+import com.aidb.aidb_backend.orchestrator.QueryExecutionOrchestrator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +23,10 @@ import java.util.Map;
 public class QueryController {
 
     @Autowired
-    private QueryTranslatorService queryTranslatorService;
+    private QueryTranslatorOrchestrator queryTranslatorOrchestrator;
 
     @Autowired
-    private UserQueryProcessorService userQueryProcessorService;
+    private QueryExecutionOrchestrator queryExecutionOrchestrator;
 
     @Autowired
     private FirebaseAuthService firebaseAuthService;
@@ -38,7 +37,7 @@ public class QueryController {
     public ResponseEntity<String> generateSql(@RequestHeader("Authorization") String authToken, @RequestBody String nlQuery) {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
-            Query sqlQuery = queryTranslatorService.translateToSql(userId, nlQuery);
+            Query sqlQuery = queryTranslatorOrchestrator.translateToSql(userId, nlQuery);
             return ResponseEntity.ok(sqlQuery.getSqlQuery());
         } catch (HttpException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
@@ -53,11 +52,11 @@ public class QueryController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> executeSql(@RequestHeader("Authorization") String authToken, @RequestBody String sqlQuery) {
+    public ResponseEntity<Object> executeSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) {
         try {
             System.out.println(sqlQuery);
             String userId = firebaseAuthService.authorizeUser(authToken);
-            List<Map<String, Object>> queryResult = userQueryProcessorService.executeSafeSelectQuery(sqlQuery);
+            List<Map<String, Object>> queryResult = queryExecutionOrchestrator.executeSafeSelectQuery(query);
             return ResponseEntity.ok(queryResult);
         } catch (HttpException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
@@ -75,7 +74,7 @@ public class QueryController {
     public ResponseEntity<Object> getAllQueries(@RequestHeader("Authorization") String authToken) {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
-            List<QueryDto> queries = queryTranslatorService.getAllQueryDtos(userId);
+            List<QueryDto> queries = queryTranslatorOrchestrator.getAllQueryDtos(userId);
             return ResponseEntity.ok(queries);
         } catch (HttpException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
@@ -90,7 +89,7 @@ public class QueryController {
     public ResponseEntity<Object> getQueryById(@RequestHeader("Authorization") String authToken, @PathVariable String id) {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
-            Query query = queryTranslatorService.getQueryById(id, userId);
+            Query query = queryTranslatorOrchestrator.getQueryById(id, userId);
             return ResponseEntity.ok(query);
         } catch (HttpException e) {
             logger.error(e.getMessage(), e.getHttpStatus());

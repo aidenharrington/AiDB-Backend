@@ -16,5 +16,7 @@ public class Query {
 
     private String sqlQuery;
 
+    private Status status;
+
     private Timestamp timestamp;
 }
