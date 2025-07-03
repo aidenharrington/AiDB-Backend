@@ -34,11 +34,12 @@ public class QueryController {
     private static final Logger logger = LoggerFactory.getLogger(QueryController.class);
 
     @PostMapping("/translate")
-    public ResponseEntity<String> generateSql(@RequestHeader("Authorization") String authToken, @RequestBody String nlQuery) {
+    public ResponseEntity<Object> generateSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
-            Query sqlQuery = queryTranslatorOrchestrator.translateToSql(userId, nlQuery);
-            return ResponseEntity.ok(sqlQuery.getSqlQuery());
+            query.setUserId(userId);
+            Query translatedQuery = queryTranslatorOrchestrator.translateToSql(userId, query);
+            return ResponseEntity.ok(translatedQuery);
         } catch (HttpException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
             return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
@@ -54,8 +55,8 @@ public class QueryController {
     @PostMapping
     public ResponseEntity<Object> executeSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) {
         try {
-            System.out.println(sqlQuery);
             String userId = firebaseAuthService.authorizeUser(authToken);
+            query.setUserId(userId);
             List<Map<String, Object>> queryResult = queryExecutionOrchestrator.executeSafeSelectQuery(query);
             return ResponseEntity.ok(queryResult);
         } catch (HttpException e) {

@@ -30,12 +30,8 @@ public class QueryTranslatorOrchestrator {
        this.openAiClient = openAiClient;
     }
 
-    public Query translateToSql(String userId, String nlQuery) {
-        Query query = new Query();
-        query.setUserId(userId);
-        query.setNlQuery(nlQuery);
-
-        String sqlQuery = openAiClient.getSqlTranslation(nlQuery);
+    public Query translateToSql(String userId, Query query) {
+        String sqlQuery = openAiClient.getSqlTranslation(query.getNlQuery());
         query.setSqlQuery(sqlQuery);
         query.setStatus(Status.TRANSLATED);
 

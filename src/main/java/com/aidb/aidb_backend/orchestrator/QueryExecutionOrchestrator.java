@@ -49,6 +49,8 @@ public class QueryExecutionOrchestrator {
 
         query.setStatus(Status.EXECUTED);
 
+        saveQueryGracefully(query);
+
         return userQueryDataService.executeSql(sql);
     }
 
