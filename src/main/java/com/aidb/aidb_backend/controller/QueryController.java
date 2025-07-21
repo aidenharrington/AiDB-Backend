@@ -34,7 +34,7 @@ public class QueryController {
     private static final Logger logger = LoggerFactory.getLogger(QueryController.class);
 
     @PostMapping("/translate")
-    public ResponseEntity<Object> generateSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) {
+    public ResponseEntity<Object> translateToSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
             query.setUserId(userId);
