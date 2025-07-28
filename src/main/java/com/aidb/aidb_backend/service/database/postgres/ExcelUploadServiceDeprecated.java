@@ -8,12 +8,17 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class UserFileDataService {
+public class ExcelUploadServiceDeprecated {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public void createTablesAndInsertData(ExcelDataDto excelData) {
+    public void upload(ExcelDataDto excelData) {
+
+        createTablesAndInsertData(excelData);
+    }
+
+    private void createTablesAndInsertData(ExcelDataDto excelData) {
         for (ExcelDataDto.TableDto table : excelData.getTables()) {
             String createTableSql = generateCreateTableSql(table);
             jdbcTemplate.execute(createTableSql);

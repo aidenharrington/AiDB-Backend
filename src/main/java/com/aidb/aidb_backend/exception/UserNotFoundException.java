@@ -1,21 +1,15 @@
 package com.aidb.aidb_backend.exception;
 
+import com.aidb.aidb_backend.exception.http.ResourceNotFoundException;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-public class UserNotFoundException extends RuntimeException {
+public class UserNotFoundException extends ResourceNotFoundException {
 
-    private final HttpStatus httpStatus;
 
-    public UserNotFoundException(String message, HttpStatus httpStatus) {
+    public UserNotFoundException(String message) {
         super(message);
-        this.httpStatus = httpStatus;
-    }
-
-    public UserNotFoundException(String message, HttpStatus httpStatus, Throwable cause) {
-        super(message, cause);
-        this.httpStatus = httpStatus;
     }
 
 
