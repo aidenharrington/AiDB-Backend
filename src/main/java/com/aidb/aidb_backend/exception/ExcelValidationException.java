@@ -1,7 +1,6 @@
 package com.aidb.aidb_backend.exception;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
 @Getter

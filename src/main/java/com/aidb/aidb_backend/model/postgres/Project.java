@@ -20,6 +20,7 @@ public class Project {
     @Column(name = "user_id", nullable = false)
     private String userId;
 
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     private List<TableMetadata> tables;
 }

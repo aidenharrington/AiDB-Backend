@@ -6,8 +6,10 @@ import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.repository.ProjectRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +19,9 @@ public class ProjectService {
 
     @Autowired
     private ProjectRepository projectRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     public List<Project> getProjectsByUserId(String userId) {
         return projectRepository.findByUserId(userId);
@@ -32,6 +37,8 @@ public class ProjectService {
         project.setId(UUID.randomUUID());
         project.setName(projectCreateRequest.getName());
         project.setUserId(userId);
+
+        System.out.println("Project: " + project);
 
 
         return projectRepository.save(project);
