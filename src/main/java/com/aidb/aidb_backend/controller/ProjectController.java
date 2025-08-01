@@ -3,6 +3,8 @@ package com.aidb.aidb_backend.controller;
 import com.aidb.aidb_backend.exception.ExcelValidationException;
 import com.aidb.aidb_backend.exception.http.HttpException;
 import com.aidb.aidb_backend.model.dto.ProjectCreateRequest;
+import com.aidb.aidb_backend.model.dto.ProjectDto;
+import com.aidb.aidb_backend.model.dto.TableDto;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.orchestrator.ProjectOrchestrator;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
@@ -16,17 +18,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/projects")
 public class ProjectController {
 
-
-
     @Autowired
     ProjectOrchestrator projectOrchestrator;
-
 
     @Autowired
     private FirebaseAuthService firebaseAuthService;
@@ -41,7 +39,7 @@ public class ProjectController {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
 
-            List<Project> projects = projectService.getProjectsByUserId(userId);
+            List<ProjectDto> projects = projectService.getProjectDtosByUserId(userId);
 
             return ResponseEntity.ok(projects);
         } catch (HttpException e) {
@@ -71,11 +69,11 @@ public class ProjectController {
     }
 
     @GetMapping("/{projectId}")
-    public ResponseEntity<Object> getProject(@RequestHeader("Authorization") String authToken, @PathVariable UUID projectId) {
+    public ResponseEntity<Object> getProject(@RequestHeader("Authorization") String authToken, @PathVariable String projectId) {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
 
-            Project project = projectService.getProjectById(userId, projectId);
+            ProjectDto project = projectService.getProjectDtoById(userId, projectId);
 
             return ResponseEntity.ok(project);
         } catch (HttpException e) {
@@ -87,16 +85,17 @@ public class ProjectController {
         }
     }
 
-
-
     @PostMapping("/{projectId}/upload")
-    public ResponseEntity<Object> uploadExcel(@RequestHeader("Authorization") String authToken, @PathVariable UUID projectId, @RequestParam("file")MultipartFile file){
+    public ResponseEntity<Object> uploadExcel(@RequestHeader("Authorization") String authToken, @PathVariable String projectId, @RequestParam("file")MultipartFile file){
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
 
-            Project project = projectOrchestrator.uploadExcel(userId, projectId, file);
+            Project project = projectOrchestrator.uploadExcel(userId, Long.valueOf(projectId), file);
+            
+            // Convert Project entity to ProjectDto before returning
+            ProjectDto projectDto = projectService.convertToDto(project);
 
-            return ResponseEntity.ok(project);
+            return ResponseEntity.ok(projectDto);
         } catch (HttpException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
             return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
@@ -105,7 +104,7 @@ public class ProjectController {
             return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
         } catch (Exception e) {
             logger.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return new ResponseEntity<>("Unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

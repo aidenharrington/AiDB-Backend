@@ -1,13 +1,15 @@
 package com.aidb.aidb_backend.service.database.postgres;
 
 import com.aidb.aidb_backend.model.dto.ExcelDataDto;
+import com.aidb.aidb_backend.model.dto.TableDto;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.model.postgres.TableMetadata;
 import com.aidb.aidb_backend.model.postgres.ColumnMetadata;
 
-import com.aidb.aidb_backend.repository.ProjectRepository;
+
 import com.aidb.aidb_backend.repository.TableMetadataRepository;
 import com.aidb.aidb_backend.repository.ColumnMetadataRepository;
+import com.aidb.aidb_backend.service.util.sql.SnowflakeIdGenerator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class ExcelUploadService {
@@ -25,8 +26,7 @@ public class ExcelUploadService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private ProjectRepository projectRepository;
+
 
     @Autowired
     private TableMetadataRepository tableMetadataRepository;
@@ -34,27 +34,32 @@ public class ExcelUploadService {
     @Autowired
     private ColumnMetadataRepository columnMetadataRepository;
 
+    @Autowired
+    private SnowflakeIdGenerator snowflakeIdGenerator;
+
     @Transactional
     public void upload(Project project, ExcelDataDto excelData) {
-        for (ExcelDataDto.TableDto tableDto : excelData.getTables()) {
+        for (TableDto tableDto : excelData.getTables()) {
 
-            // Generate unique logical name
-            String logicalName = generateUniqueLogicalName(project, tableDto.getName());
+            // Generate unique display name
+            String displayName = generateUniqueDisplayName(project, tableDto.getFileName());
 
             // Generate physical table name using hash
-            String physicalTableName = generatePhysicalTableName(project.getId(), logicalName);
+            String tableName = generateTableName(project.getId(), displayName);
 
             // Save metadata: TableMetadata
             TableMetadata tableMetadata = new TableMetadata();
-            tableMetadata.setId(UUID.randomUUID());
+            tableMetadata.setId(snowflakeIdGenerator.nextId());
             tableMetadata.setProject(project);
-            tableMetadata.setName(logicalName);
+            tableMetadata.setFileName(tableDto.getFileName());
+            tableMetadata.setDisplayName(displayName);
+            tableMetadata.setTableName(tableName);
             tableMetadataRepository.save(tableMetadata);
 
             // Save metadata: Columns
-            for (ExcelDataDto.ColumnDto columnDto : tableDto.getColumns()) {
+            for (TableDto.ColumnDto columnDto : tableDto.getColumns()) {
                 ColumnMetadata columnMetadata = new ColumnMetadata();
-                columnMetadata.setId(UUID.randomUUID());
+                columnMetadata.setId(snowflakeIdGenerator.nextId());
                 columnMetadata.setTable(tableMetadata);
                 columnMetadata.setName(columnDto.getName());
                 columnMetadata.setType(columnDto.getType().name());
@@ -62,47 +67,47 @@ public class ExcelUploadService {
             }
 
             // Create physical table
-            String createTableSql = generateCreateTableSql(physicalTableName, tableDto);
+            String createTableSql = generateCreateTableSql(tableName, tableDto);
             jdbcTemplate.execute(createTableSql);
 
             // Insert data into physical table
             for (List<Object> row : tableDto.getRows()) {
-                String insertSql = generateInsertSql(physicalTableName, tableDto, row);
+                String insertSql = generateInsertSql(tableName, tableDto, row);
                 jdbcTemplate.update(insertSql);
             }
         }
     }
 
-    private String generateUniqueLogicalName(Project project, String baseName) {
-        String logicalName = baseName;
+    private String generateUniqueDisplayName(Project project, String baseName) {
+        String displayName = baseName;
         int suffix = 1;
 
-        while (tableMetadataRepository.existsByProjectAndName(project, logicalName)) {
-            logicalName = baseName + " (" + suffix++ + ")";
+        while (tableMetadataRepository.existsByProjectAndDisplayName(project, displayName)) {
+            displayName = baseName + " (" + suffix++ + ")";
         }
 
-        return logicalName;
+        return displayName;
     }
 
-    private String generatePhysicalTableName(UUID projectId, String logicalName) {
+    private String generateTableName(Long projectId, String displayName) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            String toHash = projectId.toString() + ":" + logicalName;
+            String toHash = projectId.toString() + ":" + displayName;
             byte[] hashBytes = digest.digest(toHash.getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < 5; i++) { // 5 bytes = 10 hex chars
                 sb.append(String.format("%02x", hashBytes[i]));
             }
-            return "project_" + projectId.toString().replace("-", "") + "_table_" + sb.toString();
+            return "project_" + projectId.toString() + "_table_" + sb.toString();
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate table name hash", e);
         }
     }
 
-    private String generateCreateTableSql(String physicalTableName, ExcelDataDto.TableDto table) {
-        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS " + physicalTableName + " (id SERIAL PRIMARY KEY, ");
+    private String generateCreateTableSql(String tableName, TableDto table) {
+        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS \"" + tableName + "\" (id SERIAL PRIMARY KEY, ");
 
-        for (ExcelDataDto.ColumnDto column : table.getColumns()) {
+        for (TableDto.ColumnDto column : table.getColumns()) {
             sql.append("\"").append(column.getName()).append("\" ")
                     .append(mapColumnTypeToSqlType(column.getType()))
                     .append(", ");
@@ -113,10 +118,10 @@ public class ExcelUploadService {
         return sql.toString();
     }
 
-    private String generateInsertSql(String physicalTableName, ExcelDataDto.TableDto table, List<Object> row) {
-        StringBuilder sql = new StringBuilder("INSERT INTO " + physicalTableName + " (");
+    private String generateInsertSql(String tableName, TableDto table, List<Object> row) {
+        StringBuilder sql = new StringBuilder("INSERT INTO \"" + tableName + "\" (");
 
-        for (ExcelDataDto.ColumnDto column : table.getColumns()) {
+        for (TableDto.ColumnDto column : table.getColumns()) {
             sql.append("\"").append(column.getName()).append("\", ");
         }
 
@@ -143,13 +148,16 @@ public class ExcelUploadService {
         return sql.toString();
     }
 
-    private String mapColumnTypeToSqlType(ExcelDataDto.ColumnTypeDto columnType) {
-        return switch (columnType) {
-            case TEXT -> "TEXT";
-            case NUMBER -> "DOUBLE PRECISION";
-            case DATE -> "DATE";
-            default -> throw new IllegalArgumentException("Unknown column type: " + columnType);
-        };
+    private String mapColumnTypeToSqlType(TableDto.ColumnTypeDto columnType) {
+        if (columnType == TableDto.ColumnTypeDto.TEXT) {
+            return "TEXT";
+        } else if (columnType == TableDto.ColumnTypeDto.NUMBER) {
+            return "DOUBLE PRECISION";
+        } else if (columnType == TableDto.ColumnTypeDto.DATE) {
+            return "DATE";
+        } else {
+            throw new IllegalArgumentException("Unknown column type: " + columnType);
+        }
     }
 
     // Simple SQL string escape (basic)

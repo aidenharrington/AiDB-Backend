@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.service.database.postgres;
 
 import com.aidb.aidb_backend.model.dto.ExcelDataDto;
+import com.aidb.aidb_backend.model.dto.TableDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -8,18 +9,13 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class ExcelUploadServiceDeprecated {
+public class UserFileDataService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public void upload(ExcelDataDto excelData) {
-
-        createTablesAndInsertData(excelData);
-    }
-
-    private void createTablesAndInsertData(ExcelDataDto excelData) {
-        for (ExcelDataDto.TableDto table : excelData.getTables()) {
+    public void createTablesAndInsertData(ExcelDataDto excelData) {
+        for (TableDto table : excelData.getTables()) {
             String createTableSql = generateCreateTableSql(table);
             jdbcTemplate.execute(createTableSql);
 
@@ -31,10 +27,10 @@ public class ExcelUploadServiceDeprecated {
         }
     }
 
-    private String generateCreateTableSql(ExcelDataDto.TableDto table) {
-        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS " + table.getName() + " (");
+    private String generateCreateTableSql(TableDto table) {
+        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS \"" + table.getTableName() + "\" (");
 
-        for (ExcelDataDto.ColumnDto column : table.getColumns()) {
+        for (TableDto.ColumnDto column : table.getColumns()) {
             sql.append(column.getName())
                     .append(" ")
                     .append(mapColumnTypeToSqlType(column.getType()))
@@ -48,11 +44,11 @@ public class ExcelUploadServiceDeprecated {
         return sql.toString();
     }
 
-    private String generateInsertSql(ExcelDataDto.TableDto table, List<Object> row) {
-        StringBuilder sql = new StringBuilder("INSERT INTO " + table.getName() + " (");
+    private String generateInsertSql(TableDto table, List<Object> row) {
+        StringBuilder sql = new StringBuilder("INSERT INTO \"" + table.getTableName() + "\" (");
 
         // Add columns to insert statement
-        for (ExcelDataDto.ColumnDto column : table.getColumns()) {
+        for (TableDto.ColumnDto column : table.getColumns()) {
             sql.append(column.getName()).append(", ");
         }
 
@@ -74,7 +70,7 @@ public class ExcelUploadServiceDeprecated {
         return sql.toString();
     }
 
-    private String mapColumnTypeToSqlType(ExcelDataDto.ColumnTypeDto columnType) {
+    private String mapColumnTypeToSqlType(TableDto.ColumnTypeDto columnType) {
         return switch (columnType) {
             case TEXT -> "TEXT";
             case NUMBER -> "DOUBLE PRECISION";

@@ -1,7 +1,6 @@
 package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.model.dto.ExcelDataDto;
-import com.aidb.aidb_backend.model.dto.ProjectCreateRequest;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.service.database.postgres.ExcelUploadService;
 import com.aidb.aidb_backend.service.database.postgres.ProjectService;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.UUID;
 
 @Component
 public class ProjectOrchestrator {
@@ -29,7 +27,7 @@ public class ProjectOrchestrator {
     @Autowired
     ExcelUploadService excelUploadService;
 
-    public Project uploadExcel(String userId, UUID projectId, MultipartFile file) throws IOException {
+    public Project uploadExcel(String userId, Long projectId, MultipartFile file) throws IOException {
         ExcelDataDto excelData = parserService.parseExcelFile(file.getInputStream());
         dataValidatorService.validateData(excelData);
         Project project = projectService.getProjectById(userId, projectId);
@@ -37,7 +35,4 @@ public class ProjectOrchestrator {
 
         return project;
     }
-
-
-
 }

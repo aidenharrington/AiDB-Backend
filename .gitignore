@@ -11,6 +11,7 @@ HELP.md
 src/main/java/com/aidb/aidb_backend/.DS_Store
 src/main/java/com/aidb/aidb_backend/model/firestore/.DS_Store
 target/
+backend.log
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

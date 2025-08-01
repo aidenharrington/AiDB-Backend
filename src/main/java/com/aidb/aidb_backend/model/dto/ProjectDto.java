@@ -4,9 +4,15 @@ import lombok.Data;
 
 import java.util.List;
 
-@Data
-public class ExcelDataDto {
 
-    private String projectName;
+@Data
+public class ProjectDto {
+
+    private String id;
+
+    private String name;
+
+    private String userId;
+
     private List<TableDto> tables;
 }

@@ -37,17 +37,17 @@ public class QueryService {
     }
 
     public String addOrUpdateQuery(Query query) throws ExecutionException, InterruptedException {
-        String queryId = query.getId();
+        Long queryId = query.getId();
 
-        if (queryId != null && !queryId.isEmpty()) {
-            DocumentReference docRef = firestore.collection(QUERY_COLLECTION).document(queryId);
+        if (queryId != null) {
+            DocumentReference docRef = firestore.collection(QUERY_COLLECTION).document(queryId.toString());
             ApiFuture<DocumentSnapshot> docSnapFuture = docRef.get();
             DocumentSnapshot docSnap = docSnapFuture.get();
 
             if (docSnap.exists()) {
                 ApiFuture<WriteResult> writeResult = docRef.set(query);
                 writeResult.get();
-                return queryId;
+                return queryId.toString();
             }
         }
 

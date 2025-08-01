@@ -4,20 +4,27 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.List;
-import java.util.UUID;
+
 
 @Entity
 @Table(name = "table_metadata")
 @Data
 public class TableMetadata {
     @Id
-    private UUID id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    private String name;
+    @Column(name = "file_name")
+    private String fileName;
+
+    @Column(name = "display_name")
+    private String displayName;
+
+    @Column(name = "table_name")
+    private String tableName;
 
     @OneToMany(mappedBy = "table", cascade = CascadeType.ALL)
     private List<ColumnMetadata> columns;

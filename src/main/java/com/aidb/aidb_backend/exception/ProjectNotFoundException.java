@@ -1,17 +1,11 @@
 package com.aidb.aidb_backend.exception;
 
-import com.aidb.aidb_backend.exception.http.ResourceNotFoundException;
-import lombok.Getter;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.util.UUID;
-
-@Getter
-public class ProjectNotFoundException extends ResourceNotFoundException {
-
-
-    public ProjectNotFoundException(UUID projectId) {
-        super("Cannot find project: " + projectId.toString());
+@ResponseStatus(HttpStatus.NOT_FOUND)
+public class ProjectNotFoundException extends RuntimeException {
+    public ProjectNotFoundException(Long projectId) {
+        super("Project not found with id: " + projectId);
     }
-
-
 }

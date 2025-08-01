@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.service.util.excel;
 
 import com.aidb.aidb_backend.model.dto.ExcelDataDto;
+import com.aidb.aidb_backend.model.dto.TableDto;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -16,45 +17,46 @@ import java.util.Objects;
 public class ExcelParserService {
 
     public ExcelDataDto parseExcelFile(InputStream fileInputStream) throws IOException {
-        Workbook workbook = new XSSFWorkbook(fileInputStream);
-        ExcelDataDto excelData = new ExcelDataDto();
-        List<ExcelDataDto.TableDto> tables = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(fileInputStream)) {
+            ExcelDataDto excelData = new ExcelDataDto();
+            List<TableDto> tables = new ArrayList<>();
 
-        // Iterate through each sheet (table)
-        for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
-            Sheet sheet = workbook.getSheetAt(sheetIndex);
-            ExcelDataDto.TableDto table = createTable(sheet);
+            // Iterate through each sheet (table)
+            for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
+                Sheet sheet = workbook.getSheetAt(sheetIndex);
+                TableDto table = createTable(sheet);
 
-            List<List<Object>> rows = parseRows(sheet, table.getColumns());
-            table.setRows(rows);
-            tables.add(table);
+                List<List<Object>> rows = parseRows(sheet, table.getColumns());
+                table.setRows(rows);
+                tables.add(table);
 
+            }
+
+            excelData.setTables(tables);
+
+            return excelData;
         }
-
-        excelData.setTables(tables);
-
-        return excelData;
     }
 
-    private ExcelDataDto.TableDto createTable(Sheet sheet) {
-        ExcelDataDto.TableDto table = new ExcelDataDto.TableDto();
-        String name = ExcelSanitizerService.formatString(sheet.getSheetName());
-        table.setName(name);
+    private TableDto createTable(Sheet sheet) {
+        TableDto table = new TableDto();
+        String fileName = ExcelSanitizerService.formatString(sheet.getSheetName());
+        table.setFileName(fileName);
 
-        List<ExcelDataDto.ColumnDto> columns = parseColumns(sheet);
+        List<TableDto.ColumnDto> columns = parseColumns(sheet);
         table.setColumns(columns);
 
         return table;
     }
 
-    private List<ExcelDataDto.ColumnDto> parseColumns (Sheet sheet) {
-        List<ExcelDataDto.ColumnDto> columns = new ArrayList<>();
+    private List<TableDto.ColumnDto> parseColumns (Sheet sheet) {
+        List<TableDto.ColumnDto> columns = new ArrayList<>();
         Row headerRow = sheet.getRow(0);
         Iterator<Cell> headerIterator = headerRow.cellIterator();
 
         while (headerIterator.hasNext()) {
             Cell cell = headerIterator.next();
-            ExcelDataDto.ColumnDto column = new ExcelDataDto.ColumnDto();
+            TableDto.ColumnDto column = new TableDto.ColumnDto();
 
             String name = ExcelSanitizerService.formatColumnName(cell.getStringCellValue());
             column.setName(name);
@@ -65,7 +67,7 @@ public class ExcelParserService {
         return columns;
     }
 
-    private List<List<Object>> parseRows(Sheet sheet, List<ExcelDataDto.ColumnDto> columns) {
+    private List<List<Object>> parseRows(Sheet sheet, List<TableDto.ColumnDto> columns) {
         List<List<Object>> rows = new ArrayList<>();
 
         for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
@@ -84,13 +86,13 @@ public class ExcelParserService {
         return rows;
     }
 
-    private ExcelDataDto.ColumnTypeDto inferColumnType(Sheet sheet, Cell columnCell) {
+    private TableDto.ColumnTypeDto inferColumnType(Sheet sheet, Cell columnCell) {
 
         // Check the cell below the column to determine column type
         Cell firstDataCell = getCell(sheet, columnCell.getRowIndex() + 1, columnCell.getColumnIndex());
 
         if (firstDataCell == null) {
-            return ExcelDataDto.ColumnTypeDto.TEXT;
+            return TableDto.ColumnTypeDto.TEXT;
         }
 
 
@@ -102,13 +104,17 @@ public class ExcelParserService {
             return null;
         }
 
-        ExcelDataDto.ColumnTypeDto cellType = inferCellType(cell);
+        TableDto.ColumnTypeDto cellType = inferCellType(cell);
 
-        return switch (cellType) {
-            case TEXT -> ExcelSanitizerService.formatString(cell.getStringCellValue());
-            case DATE -> ExcelSanitizerService.formatDate(cell.getDateCellValue());
-            case NUMBER -> cell.getNumericCellValue();
-        };
+        if (cellType == TableDto.ColumnTypeDto.TEXT) {
+            return ExcelSanitizerService.formatString(cell.getStringCellValue());
+        } else if (cellType == TableDto.ColumnTypeDto.DATE) {
+            return ExcelSanitizerService.formatDate(cell.getDateCellValue());
+        } else if (cellType == TableDto.ColumnTypeDto.NUMBER) {
+            return cell.getNumericCellValue();
+        }
+        
+        return null;
     }
 
     private Cell getCell(Sheet sheet, int rowIndex, int colIndex) {
@@ -116,19 +122,19 @@ public class ExcelParserService {
         return row != null ? row.getCell(colIndex) : null;
     }
 
-    private ExcelDataDto.ColumnTypeDto inferCellType(Cell cell) {
+    private TableDto.ColumnTypeDto inferCellType(Cell cell) {
         if (cell == null) {
-            return ExcelDataDto.ColumnTypeDto.TEXT;
+            return TableDto.ColumnTypeDto.TEXT;
         }
 
         if (Objects.requireNonNull(cell.getCellType()) == CellType.NUMERIC) {
             if (DateUtil.isCellDateFormatted(cell)) {
-                return ExcelDataDto.ColumnTypeDto.DATE;
+                return TableDto.ColumnTypeDto.DATE;
             } else {
-                return ExcelDataDto.ColumnTypeDto.NUMBER;
+                return TableDto.ColumnTypeDto.NUMBER;
             }
         }
-        return ExcelDataDto.ColumnTypeDto.TEXT;
+        return TableDto.ColumnTypeDto.TEXT;
     }
 
 }
