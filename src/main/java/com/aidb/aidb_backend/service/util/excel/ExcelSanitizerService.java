@@ -14,7 +14,8 @@ public class ExcelSanitizerService {
 
     public static String formatColumnName(String value) {
         value = formatString(value);
-        value = quoteColumnNameIfReserved(value);
+        // No longer required since all column names quoted
+        // value = quoteColumnNameIfReserved(value);
 
         return value;
     }
