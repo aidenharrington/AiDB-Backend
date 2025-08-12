@@ -37,7 +37,7 @@ public class QueryService {
     }
 
     public String addOrUpdateQuery(Query query) throws ExecutionException, InterruptedException {
-        Long queryId = query.getId();
+        String queryId = query.getId();
 
         if (queryId != null) {
             DocumentReference docRef = firestore.collection(QUERY_COLLECTION).document(queryId.toString());
@@ -47,7 +47,7 @@ public class QueryService {
             if (docSnap.exists()) {
                 ApiFuture<WriteResult> writeResult = docRef.set(query);
                 writeResult.get();
-                return queryId.toString();
+                return queryId;
             }
         }
 

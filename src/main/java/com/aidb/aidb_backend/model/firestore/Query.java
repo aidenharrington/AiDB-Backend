@@ -8,7 +8,7 @@ import lombok.Data;
 public class Query {
 
     @DocumentId
-    private Long id;
+    private String id;
 
     private String userId;
 
