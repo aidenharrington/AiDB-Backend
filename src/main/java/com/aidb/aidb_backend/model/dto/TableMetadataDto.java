@@ -10,5 +10,5 @@ public class TableMetadataDto {
     private String fileName;
     private String displayName;
     private String tableName;
-    private List<ColumnMetadataDto> columns;
+    private List<ColumnMetadataDTO> columns;
 } 

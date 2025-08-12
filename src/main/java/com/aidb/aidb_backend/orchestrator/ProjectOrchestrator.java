@@ -1,6 +1,6 @@
 package com.aidb.aidb_backend.orchestrator;
 
-import com.aidb.aidb_backend.model.dto.ExcelDataDto;
+import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.service.database.postgres.ExcelUploadService;
 import com.aidb.aidb_backend.service.database.postgres.ProjectService;
@@ -28,7 +28,7 @@ public class ProjectOrchestrator {
     ExcelUploadService excelUploadService;
 
     public Project uploadExcel(String userId, Long projectId, MultipartFile file) throws IOException {
-        ExcelDataDto excelData = parserService.parseExcelFile(file.getInputStream());
+        ExcelDataDTO excelData = parserService.parseExcelFile(file.getInputStream());
         dataValidatorService.validateData(excelData);
         Project project = projectService.getProjectById(userId, projectId);
         excelUploadService.upload(project, excelData);

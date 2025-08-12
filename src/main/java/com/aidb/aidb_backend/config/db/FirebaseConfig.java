@@ -1,4 +1,4 @@
-package com.aidb.aidb_backend.config;
+package com.aidb.aidb_backend.config.db;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;

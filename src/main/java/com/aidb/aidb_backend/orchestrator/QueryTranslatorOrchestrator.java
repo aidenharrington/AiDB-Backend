@@ -1,7 +1,7 @@
 package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.exception.http.ForbiddenException;
-import com.aidb.aidb_backend.model.dto.QueryDto;
+import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.model.firestore.Status;
 import com.aidb.aidb_backend.service.api.OpenAiClient;
@@ -40,7 +40,7 @@ public class QueryTranslatorOrchestrator {
         return query;
     }
 
-    public List<QueryDto> getAllQueryDtos(String userId) throws ExecutionException, InterruptedException {
+    public List<QueryDTO> getAllQueryDTOs(String userId) throws ExecutionException, InterruptedException {
         return queryService.getAllQueryDtos(userId);
     }
 

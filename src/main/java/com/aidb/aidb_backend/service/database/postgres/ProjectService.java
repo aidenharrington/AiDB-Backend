@@ -1,10 +1,10 @@
 package com.aidb.aidb_backend.service.database.postgres;
 
 import com.aidb.aidb_backend.exception.ProjectNotFoundException;
-import com.aidb.aidb_backend.model.dto.ProjectCreateRequest;
-import com.aidb.aidb_backend.model.dto.ProjectDto;
-import com.aidb.aidb_backend.model.dto.ProjectOverviewDto;
-import com.aidb.aidb_backend.model.dto.TableDto;
+import com.aidb.aidb_backend.model.api.ProjectCreateRequest;
+import com.aidb.aidb_backend.model.dto.ProjectDTO;
+import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
+import com.aidb.aidb_backend.model.dto.TableDTO;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.model.postgres.TableMetadata;
 import com.aidb.aidb_backend.model.postgres.ColumnMetadata;
@@ -35,14 +35,14 @@ public class ProjectService {
         return projectRepository.findByUserId(userId);
     }
 
-    public List<ProjectOverviewDto> getProjectOverviewDtosByUserId(String userId) {
+    public List<ProjectOverviewDTO> getProjectOverviewDtosByUserId(String userId) {
         List<Project> projects = projectRepository.findByUserId(userId);
         return projects.stream()
                 .map(this::convertToOverviewDto)
                 .collect(Collectors.toList());
     }
 
-    public List<ProjectDto> getProjectDtosByUserId(String userId) {
+    public List<ProjectDTO> getProjectDtosByUserId(String userId) {
         List<Project> projects = projectRepository.findByUserId(userId);
         return projects.stream()
                 .map(this::convertToDto)
@@ -54,12 +54,12 @@ public class ProjectService {
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
     }
 
-    public ProjectDto getProjectDtoById(String userId, String projectId) {
+    public ProjectDTO getProjectDtoById(String userId, String projectId) {
         Project project = getProjectById(userId, Long.valueOf(projectId));
         return convertToDto(project);
     }
 
-    public ProjectDto getProjectDto(String userId, Long projectId) {
+    public ProjectDTO getProjectDto(String userId, Long projectId) {
         Project project = getProjectById(userId, projectId);
         return convertToDto(project);
     }
@@ -75,32 +75,32 @@ public class ProjectService {
         return projectRepository.save(project);
     }
 
-    public ProjectDto convertToDto(Project project) {
-        ProjectDto dto = new ProjectDto();
+    public ProjectDTO convertToDto(Project project) {
+        ProjectDTO dto = new ProjectDTO();
         dto.setId(String.valueOf(project.getId()));
         dto.setName(project.getName());
         dto.setUserId(project.getUserId());
         
         if (project.getTables() != null) {
-            List<TableDto> tableDtos = project.getTables().stream()
+            List<TableDTO> tableDTOS = project.getTables().stream()
                     .map(this::convertTableToTableDtoWithData)
                     .collect(Collectors.toList());
-            dto.setTables(tableDtos);
+            dto.setTables(tableDTOS);
         }
         
         return dto;
     }
 
-    public ProjectOverviewDto convertToOverviewDto(Project project) {
-        ProjectOverviewDto dto = new ProjectOverviewDto();
+    public ProjectOverviewDTO convertToOverviewDto(Project project) {
+        ProjectOverviewDTO dto = new ProjectOverviewDTO();
         dto.setId(String.valueOf(project.getId()));
         dto.setName(project.getName());
         dto.setUserId(project.getUserId());
         return dto;
     }
 
-    private TableDto convertTableToTableDtoWithData(TableMetadata table) {
-        TableDto dto = new TableDto();
+    private TableDTO convertTableToTableDtoWithData(TableMetadata table) {
+        TableDTO dto = new TableDTO();
         
         // Add metadata fields for frontend compatibility
         dto.setId(String.valueOf(table.getId()));
@@ -109,7 +109,7 @@ public class ProjectService {
         dto.setTableName(table.getTableName());
         
         if (table.getColumns() != null) {
-            List<TableDto.ColumnDto> columnDtos = table.getColumns().stream()
+            List<TableDTO.ColumnDto> columnDtos = table.getColumns().stream()
                     .map(this::convertColumnToTableColumnDto)
                     .collect(Collectors.toList());
             dto.setColumns(columnDtos);
@@ -119,7 +119,7 @@ public class ProjectService {
         try {
             String selectSql = "SELECT * FROM \"" + table.getTableName() + "\"";
             System.out.println("selectSql: " + selectSql);  
-            System.out.println("Using default JdbcTemplate (App UserLimits connection)");
+            System.out.println("Using default JdbcTemplate (App UserLimitUsage connection)");
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(selectSql);
             System.out.println("rows: " + rows);
             
@@ -139,10 +139,10 @@ public class ProjectService {
         return dto;
     }
 
-    private TableDto.ColumnDto convertColumnToTableColumnDto(ColumnMetadata column) {
-        TableDto.ColumnDto dto = new TableDto.ColumnDto();
+    private TableDTO.ColumnDto convertColumnToTableColumnDto(ColumnMetadata column) {
+        TableDTO.ColumnDto dto = new TableDTO.ColumnDto();
         dto.setName(column.getName());
-        dto.setType(TableDto.ColumnTypeDto.TEXT); // Default to TEXT, you may need to map this properly
+        dto.setType(TableDTO.ColumnTypeDto.TEXT); // Default to TEXT, you may need to map this properly
         return dto;
     }
 }

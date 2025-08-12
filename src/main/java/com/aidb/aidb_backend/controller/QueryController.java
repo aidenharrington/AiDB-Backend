@@ -3,7 +3,7 @@ package com.aidb.aidb_backend.controller;
 import com.aidb.aidb_backend.exception.IllegalSqlException;
 import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.exception.http.HttpException;
-import com.aidb.aidb_backend.model.dto.QueryDto;
+import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
 import com.aidb.aidb_backend.orchestrator.QueryTranslatorOrchestrator;
@@ -75,7 +75,7 @@ public class QueryController {
     public ResponseEntity<Object> getAllQueries(@RequestHeader("Authorization") String authToken) {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
-            List<QueryDto> queries = queryTranslatorOrchestrator.getAllQueryDtos(userId);
+            List<QueryDTO> queries = queryTranslatorOrchestrator.getAllQueryDTOs(userId);
             return ResponseEntity.ok(queries);
         } catch (HttpException e) {
             logger.error(e.getMessage(), e.getHttpStatus());

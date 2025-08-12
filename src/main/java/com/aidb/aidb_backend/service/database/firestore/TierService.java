@@ -39,12 +39,13 @@ public class TierService {
         tierMap = new HashMap<>();
         for (DocumentSnapshot doc : documents) {
             Tier tier = doc.toObject(Tier.class);
-            if (tier != null && tier.getName() != null) {
-                tierMap.put(tier.getName(), tier);
+            if (tier != null && tier.getTierName() != null) {
+                tierMap.put(tier.getTierName(), tier);
             }
         }
 
         return tierMap;
     }
+
 
 }

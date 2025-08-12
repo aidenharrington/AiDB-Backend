@@ -1,4 +1,4 @@
-package com.aidb.aidb_backend.config;
+package com.aidb.aidb_backend.config.api;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;

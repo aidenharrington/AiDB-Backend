@@ -2,9 +2,8 @@ package com.aidb.aidb_backend.controller;
 
 import com.aidb.aidb_backend.exception.ExcelValidationException;
 import com.aidb.aidb_backend.exception.http.HttpException;
-import com.aidb.aidb_backend.model.dto.ProjectCreateRequest;
-import com.aidb.aidb_backend.model.dto.ProjectDto;
-import com.aidb.aidb_backend.model.dto.TableDto;
+import com.aidb.aidb_backend.model.api.ProjectCreateRequest;
+import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.orchestrator.ProjectOrchestrator;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
@@ -39,7 +38,7 @@ public class ProjectController {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
 
-            List<ProjectDto> projects = projectService.getProjectDtosByUserId(userId);
+            List<ProjectDTO> projects = projectService.getProjectDtosByUserId(userId);
 
             return ResponseEntity.ok(projects);
         } catch (HttpException e) {
@@ -73,7 +72,7 @@ public class ProjectController {
         try {
             String userId = firebaseAuthService.authorizeUser(authToken);
 
-            ProjectDto project = projectService.getProjectDtoById(userId, projectId);
+            ProjectDTO project = projectService.getProjectDtoById(userId, projectId);
 
             return ResponseEntity.ok(project);
         } catch (HttpException e) {
@@ -92,8 +91,8 @@ public class ProjectController {
 
             Project project = projectOrchestrator.uploadExcel(userId, Long.valueOf(projectId), file);
             
-            // Convert Project entity to ProjectDto before returning
-            ProjectDto projectDto = projectService.convertToDto(project);
+            // Convert Project entity to ProjectDTO before returning
+            ProjectDTO projectDto = projectService.convertToDto(project);
 
             return ResponseEntity.ok(projectDto);
         } catch (HttpException e) {

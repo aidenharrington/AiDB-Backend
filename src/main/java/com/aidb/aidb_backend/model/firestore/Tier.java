@@ -8,7 +8,7 @@ public class Tier {
     @DocumentId
     private String id;
 
-    private String name;
+    private String tierName;
 
     private int queryLimit;
 

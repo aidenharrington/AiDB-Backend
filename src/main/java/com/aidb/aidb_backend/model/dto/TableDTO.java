@@ -5,7 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class TableDto {
+public class TableDTO {
     private String id;
     private String fileName;
     private String displayName;

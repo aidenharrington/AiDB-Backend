@@ -2,9 +2,13 @@ package com.aidb.aidb_backend.model.dto;
 
 import lombok.Data;
 
+
 @Data
-public class ColumnMetadataDto {
+public class ProjectOverviewDTO {
+
     private String id;
+
     private String name;
-    private String type;
-} 
+
+    private String userId;
+}
