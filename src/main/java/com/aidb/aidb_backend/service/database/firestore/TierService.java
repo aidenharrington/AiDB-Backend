@@ -47,5 +47,11 @@ public class TierService {
         return tierMap;
     }
 
+    public Tier getTier(String tierName) throws Exception {
+        HashMap<String, Tier> tierMap = getTierMap();
+
+        return tierMap.get(tierName);
+    }
+
 
 }

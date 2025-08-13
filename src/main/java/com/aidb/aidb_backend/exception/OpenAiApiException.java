@@ -1,8 +1,11 @@
 package com.aidb.aidb_backend.exception;
 
+import com.aidb.aidb_backend.exception.http.HttpException;
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-public class OpenAiApiException extends RuntimeException {
+@Getter
+public class OpenAiApiException extends HttpException {
 
     private final HttpStatus httpStatus;
 
@@ -11,12 +14,4 @@ public class OpenAiApiException extends RuntimeException {
         this.httpStatus = httpStatus;
     }
 
-    public OpenAiApiException(String message, HttpStatus httpStatus, Throwable cause) {
-        super(message, cause);
-        this.httpStatus = httpStatus;
-    }
-
-    public HttpStatus getHttpStatus() {
-        return httpStatus;
-    }
 }

@@ -5,7 +5,7 @@ import com.google.cloud.firestore.annotation.DocumentId;
 import lombok.Data;
 
 @Data
-public class UserLimitUsage {
+public class UserLimitsUsage {
 
     // Corresponds to Firebase Authentication User UID
     @DocumentId
@@ -17,11 +17,9 @@ public class UserLimitUsage {
 
     private int translationLimitUsage;
 
-    private int dataRowUsageUsage;
+    private int dataRowLimitUsage;
 
     private int projectLimitUsage;
-
-    private int tablesPerProjectLimitUsage;
 
     private Timestamp createdAt;
 

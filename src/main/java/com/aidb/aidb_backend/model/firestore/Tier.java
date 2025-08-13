@@ -14,9 +14,10 @@ public class Tier {
 
     private int translationLimit;
 
-    private int dataRowUsage;
+    private int dataRowLimit;
 
     private int projectLimit;
 
-    private int tablesPerProjectLimit;
+    private int maxFileSize;
+
 }

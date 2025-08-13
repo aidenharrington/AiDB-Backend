@@ -1,23 +1,22 @@
 package com.aidb.aidb_backend.model.firestore.util;
 
 import lombok.Getter;
-import org.hibernate.metamodel.mapping.ordering.TranslationContext;
 
 @Getter
 public enum LimitedOperation {
-    QUERY,
-    TRANSLATION,
-    DATA_ROW,
-    PROJECT,
-    TABLES;
+    QUERY("queryLimit", "queryLimitUsage"),
+    TRANSLATION("translationLimit", "translationLimitUsage"),
+    DATA_ROW("dataRowLimit", "dataRowLimitUsage"),
+    PROJECT("projectLimit", "projectLimitUsage");
 
-    // TODO - Tier - Fix or remove
 
-//    private final String firestoreField;
-//
-//    LimitedOperation(String firestoreField) {
-//        this.firestoreField = firestoreField;
-//    }
+    private final String limitFieldName;
+    private final String usageFieldName;
+
+    LimitedOperation(String limitFieldName, String usageFieldName) {
+        this.limitFieldName = limitFieldName;
+        this.usageFieldName = usageFieldName;
+    }
 
 
 }

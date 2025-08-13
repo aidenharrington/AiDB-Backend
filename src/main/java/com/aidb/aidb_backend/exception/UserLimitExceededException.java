@@ -1,17 +1,16 @@
 package com.aidb.aidb_backend.exception;
 
+import com.aidb.aidb_backend.exception.http.ForbiddenException;
 import com.aidb.aidb_backend.exception.http.HttpException;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-public class IllegalSqlException extends HttpException {
+public class UserLimitExceededException extends ForbiddenException {
 
-    private final HttpStatus httpStatus;
-
-    public IllegalSqlException(String message, HttpStatus httpStatus) {
+    public UserLimitExceededException(String message) {
         super(message);
-        this.httpStatus = httpStatus;
     }
+
 
 }

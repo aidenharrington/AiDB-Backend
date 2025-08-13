@@ -119,7 +119,7 @@ public class ProjectService {
         try {
             String selectSql = "SELECT * FROM \"" + table.getTableName() + "\"";
             System.out.println("selectSql: " + selectSql);  
-            System.out.println("Using default JdbcTemplate (App UserLimitUsage connection)");
+            System.out.println("Using default JdbcTemplate (App UserLimitsUsage connection)");
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(selectSql);
             System.out.println("rows: " + rows);
             

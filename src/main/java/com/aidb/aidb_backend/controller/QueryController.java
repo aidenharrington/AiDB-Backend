@@ -3,6 +3,9 @@ package com.aidb.aidb_backend.controller;
 import com.aidb.aidb_backend.exception.IllegalSqlException;
 import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.exception.http.HttpException;
+import com.aidb.aidb_backend.model.api.APIResponse;
+import com.aidb.aidb_backend.model.api.PayloadMetadata;
+import com.aidb.aidb_backend.model.api.TierInfo;
 import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
@@ -40,10 +43,10 @@ public class QueryController {
             query.setUserId(userId);
             Query translatedQuery = queryTranslatorOrchestrator.translateToSql(userId, query);
             return ResponseEntity.ok(translatedQuery);
+
+            // TODO - remove
+            //return ResponseEntity.ok(new APIResponse(new PayloadMetadata(new TierInfo()), translatedQuery));
         } catch (HttpException e) {
-            logger.error(e.getMessage(), e.getHttpStatus());
-            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
-        } catch (OpenAiApiException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
             return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
         } catch (Exception e) {
@@ -60,9 +63,6 @@ public class QueryController {
             List<Map<String, Object>> queryResult = queryExecutionOrchestrator.executeSafeSelectQuery(query);
             return ResponseEntity.ok(queryResult);
         } catch (HttpException e) {
-            logger.error(e.getMessage(), e.getHttpStatus());
-            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
-        } catch (IllegalSqlException e) {
             logger.error(e.getMessage(), e.getHttpStatus());
             return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
         } catch (Exception e) {
