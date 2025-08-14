@@ -10,14 +10,14 @@ public class Tier {
 
     private String tierName;
 
-    private int queryLimit;
+    private Long queryLimit;
 
-    private int translationLimit;
+    private Long translationLimit;
 
-    private int dataRowLimit;
+    private Long dataRowLimit;
 
-    private int projectLimit;
+    private Long projectLimit;
 
-    private int maxFileSize;
+    private Long maxFileSize;
 
 }

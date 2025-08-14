@@ -54,16 +54,18 @@ public class UserLimitsService {
             return firestore.runTransaction((Transaction.Function<Long>) transaction -> {
                 DocumentSnapshot snapshot = transaction.get(docRef).get();
 
-                Long currentUsage = snapshot.getLong(operation.getUsageFieldName());
-                Long updatedUsage = currentUsage == null ? (long) opIncrementVal : currentUsage + opIncrementVal;
+                Long curUsage = snapshot.getLong(operation.getUsageFieldName());
+                Long updatedUsage = curUsage == null ? (long) opIncrementVal : curUsage + opIncrementVal;
 
-                transaction.update(docRef, operation.getUsageFieldName(), updatedUsage);
+                transaction.update(docRef,
+                        operation.getUsageFieldName(), updatedUsage,
+                        "lastUpdated", FieldValue.serverTimestamp()
+                );
+
                 return updatedUsage;
             }).get();
         } catch (Exception e) {
             logger.error("Graceful error occurred while updating limit usage: {}", e.getMessage());
-
-            // Exception handled gracefully
             return null;
         }
     }

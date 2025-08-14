@@ -13,23 +13,23 @@ public class TierInfo {
 
     private String userId;
 
-    private int queryLimit;
+    private Long queryLimit;
 
-    private int queryLimitUsage;
+    private Long queryLimitUsage;
 
-    private int translationLimit;
+    private Long translationLimit;
 
-    private int translationLimitUsage;
+    private Long translationLimitUsage;
 
-    private int dataRowLimit;
+    private Long dataRowLimit;
 
-    private int dataRowLimitUsage;
+    private Long dataRowLimitUsage;
 
-    private int projectLimit;
+    private Long projectLimit;
 
-    private int projectLimitUsage;
+    private Long projectLimitUsage;
 
-    private int maxFileSize;
+    private Long maxFileSize;
 
     public static TierInfo from(UserLimitsUsage usage, Tier tier) {
         return TierInfo.builder()

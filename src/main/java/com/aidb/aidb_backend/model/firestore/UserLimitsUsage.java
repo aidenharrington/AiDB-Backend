@@ -13,13 +13,13 @@ public class UserLimitsUsage {
 
     private String tier;
 
-    private int queryLimitUsage;
+    private Long queryLimitUsage;
 
-    private int translationLimitUsage;
+    private Long translationLimitUsage;
 
-    private int dataRowLimitUsage;
+    private Long dataRowLimitUsage;
 
-    private int projectLimitUsage;
+    private Long projectLimitUsage;
 
     private Timestamp createdAt;
 

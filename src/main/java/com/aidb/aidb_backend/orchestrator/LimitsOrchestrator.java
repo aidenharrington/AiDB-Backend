@@ -33,8 +33,12 @@ public class LimitsOrchestrator {
     }
 
     public void verifyLimit(TierInfo tierInfo, LimitedOperation op, int opIncrementVal) {
-        int curUsage = getUsageByOperation(op);
-        int limit = getLimitByOperation(op);
+        if (op == null) {
+            return;
+        }
+
+        Long curUsage = op.getUsage(tierInfo);
+        Long limit = op.getLimit(tierInfo);
 
         if (curUsage + opIncrementVal <= limit) {
             throw new UserLimitExceededException("Exceeded limit: " + op.name());
@@ -42,27 +46,16 @@ public class LimitsOrchestrator {
     }
 
 
-    public TierInfo updateLimit(TierInfo tierInfo, LimitedOperation operation, int opIncrementVal) {
-        // Resume
+    public TierInfo updateLimit(TierInfo tierInfo, LimitedOperation op, int opIncrementVal) {
+        if (op == null) {
+            return tierInfo;
+        }
 
+        Long updatedUsage = userLimitsService.updateLimitUsage(op, opIncrementVal);
 
-        return tierInfo;
-    }
-
-    private int getUsageByOperation(LimitedOperation operation) {
-        // TODO
-        return -1;
-    }
-
-    private TierInfo incrementUsage(TierInfo tierInfo, LimitedOperation operation, int opIncreaseVal) {
-        // TODO
+        op.setUsage(tierInfo, updatedUsage);
 
         return tierInfo;
-    }
-
-    private int getLimitByOperation(LimitedOperation operation) {
-        // TODO
-        return -1;
     }
 
 }

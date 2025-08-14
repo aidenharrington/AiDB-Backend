@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.controller;
 
 import com.aidb.aidb_backend.model.api.APIResponse;
+import com.aidb.aidb_backend.model.api.ActionWithUserId;
 import com.aidb.aidb_backend.model.api.PayloadMetadata;
 import com.aidb.aidb_backend.model.api.TierInfo;
 import com.aidb.aidb_backend.model.firestore.util.LimitedOperation;
@@ -23,18 +24,31 @@ public abstract class BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseController.class);
 
-    protected <T> ResponseEntity<APIResponse<T>> handleRequest(String authToken, LimitedOperation op, int opIncrementVal, Function<String, T> action) throws Exception {
+    protected <T> ResponseEntity<APIResponse<T>> handleRequest(
+            String authToken,
+            LimitedOperation op,
+            int opIncrementVal,
+            ActionWithUserId<T> action,
+            Object... args) throws Exception {
+
+        // 1. Authorize user
         String userId = firebaseAuthService.authorizeUser(authToken);
+
+        // 2. Get user tier info and verify limits
         TierInfo tierInfo = limitsOrchestrator.getUserTierInfo(userId);
         limitsOrchestrator.verifyLimit(tierInfo, op, opIncrementVal);
 
-        T result = action.apply(userId);
+        // 3. Execute the action with userId + extra args
+        T result = action.apply(userId, args);
 
+        // 4. Update limit usage
         tierInfo = limitsOrchestrator.updateLimit(tierInfo, op, opIncrementVal);
 
+        // 5. Build response
         PayloadMetadata meta = new PayloadMetadata(tierInfo);
-        APIResponse<T> apiResponse = new APIResponse<T>(meta, result);
+        APIResponse<T> apiResponse = new APIResponse<>(meta, result);
 
         return ResponseEntity.ok(apiResponse);
     }
+
 }

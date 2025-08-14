@@ -54,12 +54,7 @@ public class ProjectService {
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
     }
 
-    public ProjectDTO getProjectDtoById(String userId, String projectId) {
-        Project project = getProjectById(userId, Long.valueOf(projectId));
-        return convertToDto(project);
-    }
-
-    public ProjectDTO getProjectDto(String userId, Long projectId) {
+    public ProjectDTO getProjectDTO(String userId, Long projectId) {
         Project project = getProjectById(userId, projectId);
         return convertToDto(project);
     }
