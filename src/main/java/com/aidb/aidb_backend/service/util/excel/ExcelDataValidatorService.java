@@ -17,7 +17,7 @@ public class ExcelDataValidatorService {
                 List<Object> row = table.getRows().get(rowIdx);
                 for (int colIdx = 0; colIdx < row.size(); colIdx++) {
                     Object cellValue = row.get(colIdx);
-                    TableDTO.ColumnTypeDto columnType = table.getColumns().get(colIdx).getType();
+                    TableDTO.ColumnTypeDTO columnType = table.getColumns().get(colIdx).getType();
                     if (!validateCell(cellValue, columnType)) {
                         String message = "Validation failed for row " + rowIdx + ", column " + colIdx;
                         throw new ExcelValidationException(message, HttpStatus.UNPROCESSABLE_ENTITY);
@@ -27,11 +27,11 @@ public class ExcelDataValidatorService {
         }
     }
 
-    private boolean validateCell(Object cellValue, TableDTO.ColumnTypeDto columnType) {
+    private boolean validateCell(Object cellValue, TableDTO.ColumnTypeDTO columnType) {
         return switch (cellValue) {
-            case String s when columnType.equals(TableDTO.ColumnTypeDto.TEXT) -> true;
-            case Double v when columnType.equals(TableDTO.ColumnTypeDto.NUMBER) -> true;
-            case java.util.Date date when columnType.equals(TableDTO.ColumnTypeDto.DATE) -> true;
+            case String s when columnType.equals(TableDTO.ColumnTypeDTO.TEXT) -> true;
+            case Double v when columnType.equals(TableDTO.ColumnTypeDTO.NUMBER) -> true;
+            case java.util.Date date when columnType.equals(TableDTO.ColumnTypeDTO.DATE) -> true;
             case null, default -> false;
         };
     }

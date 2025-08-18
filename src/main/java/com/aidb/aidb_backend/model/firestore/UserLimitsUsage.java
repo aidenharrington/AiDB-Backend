@@ -1,5 +1,6 @@
 package com.aidb.aidb_backend.model.firestore;
 
+import com.aidb.aidb_backend.model.firestore.util.TierId;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.annotation.DocumentId;
 import lombok.Data;
@@ -11,7 +12,7 @@ public class UserLimitsUsage {
     @DocumentId
     private String id;
 
-    private String tier;
+    private TierId tierId;
 
     private Long queryLimitUsage;
 
@@ -25,7 +26,26 @@ public class UserLimitsUsage {
 
     private Timestamp lastUpdated;
 
+    public UserLimitsUsage() {};
 
+
+   private UserLimitsUsage(String id) {
+       this.id = id;
+       this.tierId = TierId.FREE;
+
+       this.queryLimitUsage = 0L;
+       this.translationLimitUsage = 0L;
+       this.dataRowLimitUsage = 0L;
+       this.projectLimitUsage = 0L;
+
+       // Timestamps set by service
+       this.createdAt = null;
+       this.lastUpdated = null;
+   }
+
+   public static UserLimitsUsage createNewUserLimits(String id) {
+       return new UserLimitsUsage(id);
+   }
 
 
 }

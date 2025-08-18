@@ -8,7 +8,8 @@ public class Tier {
     @DocumentId
     private String id;
 
-    private String tierName;
+    // Must match a TierId enum value
+    private String name;
 
     private Long queryLimit;
 

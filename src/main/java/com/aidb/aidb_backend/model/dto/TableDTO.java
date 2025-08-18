@@ -10,16 +10,16 @@ public class TableDTO {
     private String fileName;
     private String displayName;
     private String tableName;
-    private List<ColumnDto> columns;
+    private List<ColumnDTO> columns;
     private List<List<Object>> rows;
 
     @Data
-    public static class ColumnDto {
+    public static class ColumnDTO {
         private String name;
-        private ColumnTypeDto type;
+        private ColumnTypeDTO type;
     }
 
-    public enum ColumnTypeDto {
+    public enum ColumnTypeDTO {
         TEXT,
         NUMBER,
         // Date is stored in user's timezone

@@ -43,20 +43,20 @@ public class ExcelParserService {
         String fileName = ExcelSanitizerService.formatString(sheet.getSheetName());
         table.setFileName(fileName);
 
-        List<TableDTO.ColumnDto> columns = parseColumns(sheet);
+        List<TableDTO.ColumnDTO> columns = parseColumns(sheet);
         table.setColumns(columns);
 
         return table;
     }
 
-    private List<TableDTO.ColumnDto> parseColumns (Sheet sheet) {
-        List<TableDTO.ColumnDto> columns = new ArrayList<>();
+    private List<TableDTO.ColumnDTO> parseColumns (Sheet sheet) {
+        List<TableDTO.ColumnDTO> columns = new ArrayList<>();
         Row headerRow = sheet.getRow(0);
         Iterator<Cell> headerIterator = headerRow.cellIterator();
 
         while (headerIterator.hasNext()) {
             Cell cell = headerIterator.next();
-            TableDTO.ColumnDto column = new TableDTO.ColumnDto();
+            TableDTO.ColumnDTO column = new TableDTO.ColumnDTO();
 
             String name = ExcelSanitizerService.formatColumnName(cell.getStringCellValue());
             column.setName(name);
@@ -67,7 +67,7 @@ public class ExcelParserService {
         return columns;
     }
 
-    private List<List<Object>> parseRows(Sheet sheet, List<TableDTO.ColumnDto> columns) {
+    private List<List<Object>> parseRows(Sheet sheet, List<TableDTO.ColumnDTO> columns) {
         List<List<Object>> rows = new ArrayList<>();
 
         for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
@@ -86,13 +86,13 @@ public class ExcelParserService {
         return rows;
     }
 
-    private TableDTO.ColumnTypeDto inferColumnType(Sheet sheet, Cell columnCell) {
+    private TableDTO.ColumnTypeDTO inferColumnType(Sheet sheet, Cell columnCell) {
 
         // Check the cell below the column to determine column type
         Cell firstDataCell = getCell(sheet, columnCell.getRowIndex() + 1, columnCell.getColumnIndex());
 
         if (firstDataCell == null) {
-            return TableDTO.ColumnTypeDto.TEXT;
+            return TableDTO.ColumnTypeDTO.TEXT;
         }
 
 
@@ -104,13 +104,13 @@ public class ExcelParserService {
             return null;
         }
 
-        TableDTO.ColumnTypeDto cellType = inferCellType(cell);
+        TableDTO.ColumnTypeDTO cellType = inferCellType(cell);
 
-        if (cellType == TableDTO.ColumnTypeDto.TEXT) {
+        if (cellType == TableDTO.ColumnTypeDTO.TEXT) {
             return ExcelSanitizerService.formatString(cell.getStringCellValue());
-        } else if (cellType == TableDTO.ColumnTypeDto.DATE) {
+        } else if (cellType == TableDTO.ColumnTypeDTO.DATE) {
             return ExcelSanitizerService.formatDate(cell.getDateCellValue());
-        } else if (cellType == TableDTO.ColumnTypeDto.NUMBER) {
+        } else if (cellType == TableDTO.ColumnTypeDTO.NUMBER) {
             return cell.getNumericCellValue();
         }
         
@@ -122,19 +122,19 @@ public class ExcelParserService {
         return row != null ? row.getCell(colIndex) : null;
     }
 
-    private TableDTO.ColumnTypeDto inferCellType(Cell cell) {
+    private TableDTO.ColumnTypeDTO inferCellType(Cell cell) {
         if (cell == null) {
-            return TableDTO.ColumnTypeDto.TEXT;
+            return TableDTO.ColumnTypeDTO.TEXT;
         }
 
         if (Objects.requireNonNull(cell.getCellType()) == CellType.NUMERIC) {
             if (DateUtil.isCellDateFormatted(cell)) {
-                return TableDTO.ColumnTypeDto.DATE;
+                return TableDTO.ColumnTypeDTO.DATE;
             } else {
-                return TableDTO.ColumnTypeDto.NUMBER;
+                return TableDTO.ColumnTypeDTO.NUMBER;
             }
         }
-        return TableDTO.ColumnTypeDto.TEXT;
+        return TableDTO.ColumnTypeDTO.TEXT;
     }
 
 }

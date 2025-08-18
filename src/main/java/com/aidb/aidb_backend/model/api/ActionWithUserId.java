@@ -4,5 +4,5 @@ import java.io.IOException;
 
 @FunctionalInterface
 public interface ActionWithUserId<T> {
-    T apply(String userId, Object... args) throws IOException;
+    T apply(String userId, Object... args) throws Exception;
 }

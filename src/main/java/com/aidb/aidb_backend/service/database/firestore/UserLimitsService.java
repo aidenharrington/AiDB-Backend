@@ -1,7 +1,7 @@
 package com.aidb.aidb_backend.service.database.firestore;
 
 import com.aidb.aidb_backend.exception.UserNotFoundException;
-import com.aidb.aidb_backend.model.api.TierInfo;
+import com.aidb.aidb_backend.exception.http.InternalServerErrorException;
 import com.aidb.aidb_backend.model.firestore.UserLimitsUsage;
 import com.aidb.aidb_backend.model.firestore.util.LimitedOperation;
 import com.google.api.core.ApiFuture;
@@ -20,13 +20,13 @@ public class UserLimitsService {
     @Autowired
     Firestore firestore;
 
-    private final String USER_COLLECTION = "user_limits";
+    private final String USER_LIMITS_COLLECTION = "user_limits";
 
     private static final Logger logger = LoggerFactory.getLogger(UserLimitsService.class);
 
 
     public UserLimitsUsage getUserLimitsById(String id) throws ExecutionException, InterruptedException {
-        DocumentSnapshot snapshot = firestore.collection(USER_COLLECTION).document(id).get().get();
+        DocumentSnapshot snapshot = firestore.collection(USER_LIMITS_COLLECTION).document(id).get().get();
 
         if (snapshot.exists()) {
             return snapshot.toObject(UserLimitsUsage.class);
@@ -36,19 +36,33 @@ public class UserLimitsService {
     }
 
     public String addUserLimits(UserLimitsUsage userLimitsUsage) throws ExecutionException, InterruptedException {
-        DocumentReference docRef = firestore.collection(USER_COLLECTION).document();
-        Timestamp currentTime = Timestamp.now();
+        if (userLimitsUsage.getId() == null || userLimitsUsage.getId().isEmpty()) {
+            throw new IllegalArgumentException("User ID must be set before saving to Firestore");
+        }
 
+        DocumentReference docRef = firestore.collection(USER_LIMITS_COLLECTION)
+                .document(userLimitsUsage.getId());
+
+        // Check if document already exists
+        DocumentSnapshot snapshot = docRef.get().get();
+        if (snapshot.exists()) {
+            throw new InternalServerErrorException("User limits already exist: " + userLimitsUsage.getId());
+        }
+
+        // Set timestamps
+        Timestamp currentTime = Timestamp.now();
         userLimitsUsage.setCreatedAt(currentTime);
         userLimitsUsage.setLastUpdated(currentTime);
 
+        // Write to Firestore
         ApiFuture<WriteResult> future = docRef.set(userLimitsUsage);
         future.get();
+
         return docRef.getId();
     }
 
-    public Long updateLimitUsage(LimitedOperation operation, int opIncrementVal) {
-        DocumentReference docRef = firestore.collection(USER_COLLECTION).document();
+    public Long updateLimitUsage(String userId, LimitedOperation operation, int opIncrementVal) {
+        DocumentReference docRef = firestore.collection(USER_LIMITS_COLLECTION).document(userId);
 
         try {
             return firestore.runTransaction((Transaction.Function<Long>) transaction -> {

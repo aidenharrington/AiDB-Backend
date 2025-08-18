@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.service.database.firestore;
 
 import com.aidb.aidb_backend.model.firestore.Tier;
+import com.aidb.aidb_backend.model.firestore.util.TierId;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import lombok.Setter;
@@ -19,13 +20,13 @@ public class TierService {
     private Firestore firestore;
 
     @Setter
-    private HashMap<String, Tier> tierMap;
+    private HashMap<TierId, Tier> tierMap;
 
     private static final Logger logger = LoggerFactory.getLogger(TierService.class);
 
-    private static final String TIER_COLLECTION = "tier";
+    private static final String TIER_COLLECTION = "tiers";
 
-    public HashMap<String, Tier> getTierMap() throws Exception {
+    public HashMap<TierId, Tier> getTierMap() throws Exception {
 
         if (tierMap != null && !tierMap.isEmpty()) {
             return this.tierMap;
@@ -39,16 +40,17 @@ public class TierService {
         tierMap = new HashMap<>();
         for (DocumentSnapshot doc : documents) {
             Tier tier = doc.toObject(Tier.class);
-            if (tier != null && tier.getTierName() != null) {
-                tierMap.put(tier.getTierName(), tier);
+            if (tier != null && tier.getName() != null) {
+                TierId tierId = TierId.valueOf(tier.getName().toUpperCase());
+                tierMap.put(tierId, tier);
             }
         }
 
         return tierMap;
     }
 
-    public Tier getTier(String tierName) throws Exception {
-        HashMap<String, Tier> tierMap = getTierMap();
+    public Tier getTier(TierId tierName) throws Exception {
+        HashMap<TierId, Tier> tierMap = getTierMap();
 
         return tierMap.get(tierName);
     }

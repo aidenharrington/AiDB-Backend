@@ -33,7 +33,7 @@ public class TierInfo {
 
     public static TierInfo from(UserLimitsUsage usage, Tier tier) {
         return TierInfo.builder()
-                .name(tier.getTierName())
+                .name(tier.getName())
                 .userId(usage.getId())
                 .queryLimit(tier.getQueryLimit())
                 .queryLimitUsage(usage.getQueryLimitUsage())

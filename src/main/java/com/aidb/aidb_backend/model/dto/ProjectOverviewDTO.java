@@ -6,9 +6,15 @@ import lombok.Data;
 @Data
 public class ProjectOverviewDTO {
 
-    private String id;
+    private Long id;
 
     private String name;
 
     private String userId;
+
+    public ProjectOverviewDTO(Long id, String name, String userId) {
+        this.id = id;
+        this.name = name;
+        this.userId = userId;
+    }
 }

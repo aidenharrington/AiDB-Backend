@@ -30,7 +30,7 @@ public class UserFileDataService {
     private String generateCreateTableSql(TableDTO table) {
         StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS \"" + table.getTableName() + "\" (");
 
-        for (TableDTO.ColumnDto column : table.getColumns()) {
+        for (TableDTO.ColumnDTO column : table.getColumns()) {
             sql.append(column.getName())
                     .append(" ")
                     .append(mapColumnTypeToSqlType(column.getType()))
@@ -48,7 +48,7 @@ public class UserFileDataService {
         StringBuilder sql = new StringBuilder("INSERT INTO \"" + table.getTableName() + "\" (");
 
         // Add columns to insert statement
-        for (TableDTO.ColumnDto column : table.getColumns()) {
+        for (TableDTO.ColumnDTO column : table.getColumns()) {
             sql.append(column.getName()).append(", ");
         }
 
@@ -70,7 +70,7 @@ public class UserFileDataService {
         return sql.toString();
     }
 
-    private String mapColumnTypeToSqlType(TableDTO.ColumnTypeDto columnType) {
+    private String mapColumnTypeToSqlType(TableDTO.ColumnTypeDTO columnType) {
         return switch (columnType) {
             case TEXT -> "TEXT";
             case NUMBER -> "DOUBLE PRECISION";

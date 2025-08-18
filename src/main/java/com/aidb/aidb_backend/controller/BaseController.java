@@ -35,14 +35,20 @@ public abstract class BaseController {
         String userId = firebaseAuthService.authorizeUser(authToken);
 
         // 2. Get user tier info and verify limits
-        TierInfo tierInfo = limitsOrchestrator.getUserTierInfo(userId);
-        limitsOrchestrator.verifyLimit(tierInfo, op, opIncrementVal);
+        TierInfo tierInfo = null;
+        if (op != null) {
+            tierInfo = limitsOrchestrator.getUserTierInfo(userId);
+            limitsOrchestrator.verifyLimit(tierInfo, op, opIncrementVal);
+        }
+
 
         // 3. Execute the action with userId + extra args
         T result = action.apply(userId, args);
 
         // 4. Update limit usage
-        tierInfo = limitsOrchestrator.updateLimit(tierInfo, op, opIncrementVal);
+        if (op != null && tierInfo != null) {
+            tierInfo = limitsOrchestrator.updateLimit(tierInfo, op, opIncrementVal);
+        }
 
         // 5. Build response
         PayloadMetadata meta = new PayloadMetadata(tierInfo);

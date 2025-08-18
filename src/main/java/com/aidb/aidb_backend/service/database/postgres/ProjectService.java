@@ -35,14 +35,11 @@ public class ProjectService {
         return projectRepository.findByUserId(userId);
     }
 
-    public List<ProjectOverviewDTO> getProjectOverviewDtosByUserId(String userId) {
-        List<Project> projects = projectRepository.findByUserId(userId);
-        return projects.stream()
-                .map(this::convertToOverviewDto)
-                .collect(Collectors.toList());
+    public List<ProjectOverviewDTO> getProjectOverviewDTOsByUserId(String userId) {
+        return projectRepository.findProjectOverviewDTOsByUserId(userId);
     }
 
-    public List<ProjectDTO> getProjectDtosByUserId(String userId) {
+    public List<ProjectDTO> getProjectDTOsByUserId(String userId) {
         List<Project> projects = projectRepository.findByUserId(userId);
         return projects.stream()
                 .map(this::convertToDto)
@@ -65,8 +62,6 @@ public class ProjectService {
         project.setName(projectCreateRequest.getName());
         project.setUserId(userId);
 
-        System.out.println("Project: " + project);
-
         return projectRepository.save(project);
     }
 
@@ -87,11 +82,9 @@ public class ProjectService {
     }
 
     public ProjectOverviewDTO convertToOverviewDto(Project project) {
-        ProjectOverviewDTO dto = new ProjectOverviewDTO();
-        dto.setId(String.valueOf(project.getId()));
-        dto.setName(project.getName());
-        dto.setUserId(project.getUserId());
-        return dto;
+        return new ProjectOverviewDTO(project.getId(),
+                project.getName(),
+                project.getUserId());
     }
 
     private TableDTO convertTableToTableDtoWithData(TableMetadata table) {
@@ -104,10 +97,10 @@ public class ProjectService {
         dto.setTableName(table.getTableName());
         
         if (table.getColumns() != null) {
-            List<TableDTO.ColumnDto> columnDtos = table.getColumns().stream()
-                    .map(this::convertColumnToTableColumnDto)
+            List<TableDTO.ColumnDTO> columnDTOS = table.getColumns().stream()
+                    .map(this::convertColumnToTableColumnDTO)
                     .collect(Collectors.toList());
-            dto.setColumns(columnDtos);
+            dto.setColumns(columnDTOS);
         }
         
         // Fetch actual table data using the tableName
@@ -134,10 +127,10 @@ public class ProjectService {
         return dto;
     }
 
-    private TableDTO.ColumnDto convertColumnToTableColumnDto(ColumnMetadata column) {
-        TableDTO.ColumnDto dto = new TableDTO.ColumnDto();
+    private TableDTO.ColumnDTO convertColumnToTableColumnDTO(ColumnMetadata column) {
+        TableDTO.ColumnDTO dto = new TableDTO.ColumnDTO();
         dto.setName(column.getName());
-        dto.setType(TableDTO.ColumnTypeDto.TEXT); // Default to TEXT, you may need to map this properly
+        dto.setType(TableDTO.ColumnTypeDTO.TEXT);
         return dto;
     }
 }
