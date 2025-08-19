@@ -57,4 +57,17 @@ public abstract class BaseController {
         return ResponseEntity.ok(apiResponse);
     }
 
+    protected <T> ResponseEntity<T> handleMetadataRequest(String authToken,
+                                                                       ActionWithUserId<T> action,
+                                                                       Object... args) throws Exception {
+        // 1. Authorize user
+        String userId = firebaseAuthService.authorizeUser(authToken);
+
+        // 2. Execute the action with userId + extra args
+        T result = action.apply(userId, args);
+
+        // 3. Build response
+        return ResponseEntity.ok(result);
+    }
+
 }

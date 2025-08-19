@@ -31,6 +31,7 @@ public class QueryTranslatorOrchestrator {
     }
 
     public Query translateToSql(String userId, Query query) {
+        query.setUserId(userId);
         String sqlQuery = openAiClient.getSqlTranslation(query.getNlQuery());
         query.setSqlQuery(sqlQuery);
         query.setStatus(Status.TRANSLATED);
@@ -44,7 +45,7 @@ public class QueryTranslatorOrchestrator {
         return queryService.getAllQueryDtos(userId);
     }
 
-    public Query getQueryById(String queryId, String userId) throws ExecutionException, InterruptedException {
+    public Query getQueryById(String userId, String queryId) throws ExecutionException, InterruptedException {
         Query query = queryService.getQueryById(queryId);
 
         if (query != null && query.getUserId().equalsIgnoreCase(userId)) {

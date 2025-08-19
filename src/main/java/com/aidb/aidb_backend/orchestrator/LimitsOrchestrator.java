@@ -21,6 +21,8 @@ public class LimitsOrchestrator {
     @Autowired
     UserLimitsService userLimitsService;
 
+    private static final int UNLIMITED_TOKEN = -1;
+
     private static final Logger logger = LoggerFactory.getLogger(LimitsOrchestrator.class);
 
     public TierInfo getUserTierInfo(String userId) throws Exception {
@@ -33,6 +35,11 @@ public class LimitsOrchestrator {
     public void verifyLimit(TierInfo tierInfo, LimitedOperation op, int opIncrementVal) {
         Long curUsage = op.getUsage(tierInfo);
         Long limit = op.getLimit(tierInfo);
+
+        // Unlimited users have no limits
+        if (limit == UNLIMITED_TOKEN) {
+            return;
+        }
 
         if (curUsage + opIncrementVal > limit) {
             throw new UserLimitExceededException("Exceeded limit: " + op.name());

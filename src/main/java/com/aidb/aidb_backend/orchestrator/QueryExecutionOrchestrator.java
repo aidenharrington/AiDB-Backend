@@ -29,7 +29,8 @@ public class QueryExecutionOrchestrator {
         this.userQueryDataService = userQueryDataService;
     }
 
-    public List<Map<String, Object>> executeSafeSelectQuery(Query query) {
+    public List<Map<String, Object>> executeSafeSelectQuery(String userId, Query query) {
+        query.setUserId(userId);
         String sql = query.getSqlQuery().trim();
 
         if (containsUnsafeKeywords(sql)) {

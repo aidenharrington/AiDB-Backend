@@ -1,13 +1,10 @@
 package com.aidb.aidb_backend.controller;
 
-import com.aidb.aidb_backend.exception.IllegalSqlException;
-import com.aidb.aidb_backend.exception.OpenAiApiException;
 import com.aidb.aidb_backend.exception.http.HttpException;
 import com.aidb.aidb_backend.model.api.APIResponse;
-import com.aidb.aidb_backend.model.api.PayloadMetadata;
-import com.aidb.aidb_backend.model.api.TierInfo;
 import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
+import com.aidb.aidb_backend.model.firestore.util.LimitedOperation;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
 import com.aidb.aidb_backend.orchestrator.QueryTranslatorOrchestrator;
 import com.aidb.aidb_backend.orchestrator.QueryExecutionOrchestrator;
@@ -23,7 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/queries")
-public class QueryController {
+public class QueryController extends BaseController {
 
     @Autowired
     private QueryTranslatorOrchestrator queryTranslatorOrchestrator;
@@ -37,68 +34,51 @@ public class QueryController {
     private static final Logger logger = LoggerFactory.getLogger(QueryController.class);
 
     @PostMapping("/translate")
-    public ResponseEntity<Object> translateToSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) {
-        try {
-            String userId = firebaseAuthService.authorizeUser(authToken);
-            query.setUserId(userId);
-            Query translatedQuery = queryTranslatorOrchestrator.translateToSql(userId, query);
-            return ResponseEntity.ok(translatedQuery);
+    public ResponseEntity<APIResponse<Query>> translateToSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) throws Exception {
+        return handleRequest(authToken,
+                LimitedOperation.TRANSLATION,
+                1,
+                (userId, args) -> {
+                    Query query1 = (Query) args[0];
 
-            // TODO - remove
-            //return ResponseEntity.ok(new APIResponse(new PayloadMetadata(new TierInfo()), translatedQuery));
-        } catch (HttpException e) {
-            logger.error(e.getMessage(), e.getHttpStatus());
-            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
-        } catch (Exception e) {
-            logger.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return new ResponseEntity<>("Unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+                    return queryTranslatorOrchestrator.translateToSql(userId, query);
+                }, query
+        );
     }
 
     @PostMapping
-    public ResponseEntity<Object> executeSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) {
-        try {
-            String userId = firebaseAuthService.authorizeUser(authToken);
-            query.setUserId(userId);
-            List<Map<String, Object>> queryResult = queryExecutionOrchestrator.executeSafeSelectQuery(query);
-            return ResponseEntity.ok(queryResult);
-        } catch (HttpException e) {
-            logger.error(e.getMessage(), e.getHttpStatus());
-            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
-        } catch (Exception e) {
-            logger.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return new ResponseEntity<>("Unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<APIResponse<List<Map<String, Object>>>> executeSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) throws Exception {
+        return handleRequest(authToken,
+                LimitedOperation.QUERY,
+                1,
+                (userId, args) -> {
+                    Query query1 = (Query) args[0];
+
+                    return queryExecutionOrchestrator.executeSafeSelectQuery(userId, query);
+                }, query
+        );
     }
 
     @GetMapping
-    public ResponseEntity<Object> getAllQueries(@RequestHeader("Authorization") String authToken) {
-        try {
-            String userId = firebaseAuthService.authorizeUser(authToken);
-            List<QueryDTO> queries = queryTranslatorOrchestrator.getAllQueryDTOs(userId);
-            return ResponseEntity.ok(queries);
-        } catch (HttpException e) {
-            logger.error(e.getMessage(), e.getHttpStatus());
-            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
-        } catch (Exception e) {
-            logger.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return new ResponseEntity<>("Unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<APIResponse<List<QueryDTO>>> getAllQueries(@RequestHeader("Authorization") String authToken) throws Exception {
+        return handleRequest(authToken,
+                null,
+                -1,
+                (userId, args) -> queryTranslatorOrchestrator.getAllQueryDTOs(userId)
+        );
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getQueryById(@RequestHeader("Authorization") String authToken, @PathVariable String id) {
-        try {
-            String userId = firebaseAuthService.authorizeUser(authToken);
-            Query query = queryTranslatorOrchestrator.getQueryById(id, userId);
-            return ResponseEntity.ok(query);
-        } catch (HttpException e) {
-            logger.error(e.getMessage(), e.getHttpStatus());
-            return new ResponseEntity<>(e.getMessage(), e.getHttpStatus());
-        } catch (Exception e) {
-            logger.error(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-            return new ResponseEntity<>("Unexpected error occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<APIResponse<Query>> getQueryById(@RequestHeader("Authorization") String authToken, @PathVariable String id) throws Exception {
+        return handleRequest(authToken,
+                null,
+                -1,
+                (userId, args) -> {
+                    String queryId = (String) args[0];
+
+                    return queryTranslatorOrchestrator.getQueryById(userId, queryId);
+                }, id
+        );
     }
 
 

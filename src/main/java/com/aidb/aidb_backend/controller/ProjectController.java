@@ -35,9 +35,7 @@ public class ProjectController extends BaseController {
         return handleRequest(authToken,
                 null,
                 -1,
-                (userId, args) -> {
-                    return projectService.getProjectOverviewDTOsByUserId(userId);
-                }
+                (userId, args) -> projectService.getProjectOverviewDTOsByUserId(userId)
         );
     }
 
