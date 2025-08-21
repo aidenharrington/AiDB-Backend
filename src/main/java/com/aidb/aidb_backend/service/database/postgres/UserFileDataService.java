@@ -1,7 +1,7 @@
 package com.aidb.aidb_backend.service.database.postgres;
 
-import com.aidb.aidb_backend.model.dto.ExcelDataDto;
-import com.aidb.aidb_backend.model.dto.TableDto;
+import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
+import com.aidb.aidb_backend.model.dto.TableDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -14,8 +14,8 @@ public class UserFileDataService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public void createTablesAndInsertData(ExcelDataDto excelData) {
-        for (TableDto table : excelData.getTables()) {
+    public void createTablesAndInsertData(ExcelDataDTO excelData) {
+        for (TableDTO table : excelData.getTables()) {
             String createTableSql = generateCreateTableSql(table);
             jdbcTemplate.execute(createTableSql);
 
@@ -27,10 +27,10 @@ public class UserFileDataService {
         }
     }
 
-    private String generateCreateTableSql(TableDto table) {
+    private String generateCreateTableSql(TableDTO table) {
         StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS \"" + table.getTableName() + "\" (");
 
-        for (TableDto.ColumnDto column : table.getColumns()) {
+        for (TableDTO.ColumnDTO column : table.getColumns()) {
             sql.append(column.getName())
                     .append(" ")
                     .append(mapColumnTypeToSqlType(column.getType()))
@@ -44,11 +44,11 @@ public class UserFileDataService {
         return sql.toString();
     }
 
-    private String generateInsertSql(TableDto table, List<Object> row) {
+    private String generateInsertSql(TableDTO table, List<Object> row) {
         StringBuilder sql = new StringBuilder("INSERT INTO \"" + table.getTableName() + "\" (");
 
         // Add columns to insert statement
-        for (TableDto.ColumnDto column : table.getColumns()) {
+        for (TableDTO.ColumnDTO column : table.getColumns()) {
             sql.append(column.getName()).append(", ");
         }
 
@@ -70,7 +70,7 @@ public class UserFileDataService {
         return sql.toString();
     }
 
-    private String mapColumnTypeToSqlType(TableDto.ColumnTypeDto columnType) {
+    private String mapColumnTypeToSqlType(TableDTO.ColumnTypeDTO columnType) {
         return switch (columnType) {
             case TEXT -> "TEXT";
             case NUMBER -> "DOUBLE PRECISION";

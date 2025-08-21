@@ -5,8 +5,8 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ExcelDataDto {
+public class ExcelDataDTO {
 
     private String projectName;
-    private List<TableDto> tables;
+    private List<TableDTO> tables;
 }

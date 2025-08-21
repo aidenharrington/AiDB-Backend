@@ -1,7 +1,7 @@
 package com.aidb.aidb_backend.service.database.postgres;
 
-import com.aidb.aidb_backend.model.dto.ExcelDataDto;
-import com.aidb.aidb_backend.model.dto.TableDto;
+import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
+import com.aidb.aidb_backend.model.dto.TableDTO;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.model.postgres.TableMetadata;
 import com.aidb.aidb_backend.model.postgres.ColumnMetadata;
@@ -36,8 +36,8 @@ public class ExcelUploadService {
     private SnowflakeIdGenerator snowflakeIdGenerator;
 
     @Transactional
-    public void upload(Project project, ExcelDataDto excelData) {
-        for (TableDto tableDto : excelData.getTables()) {
+    public void upload(Project project, ExcelDataDTO excelData) {
+        for (TableDTO tableDto : excelData.getTables()) {
 
             // Generate unique display name
             String displayName = generateUniqueDisplayName(project, tableDto.getFileName());
@@ -55,7 +55,7 @@ public class ExcelUploadService {
             tableMetadataRepository.save(tableMetadata);
 
             // Save metadata: Columns
-            for (TableDto.ColumnDto columnDto : tableDto.getColumns()) {
+            for (TableDTO.ColumnDTO columnDto : tableDto.getColumns()) {
                 ColumnMetadata columnMetadata = new ColumnMetadata();
                 columnMetadata.setId(snowflakeIdGenerator.nextId());
                 columnMetadata.setTable(tableMetadata);
@@ -102,10 +102,10 @@ public class ExcelUploadService {
         }
     }
 
-    private String generateCreateTableSql(String tableName, TableDto table) {
+    private String generateCreateTableSql(String tableName, TableDTO table) {
         StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS \"" + tableName + "\" (id SERIAL PRIMARY KEY, ");
 
-        for (TableDto.ColumnDto column : table.getColumns()) {
+        for (TableDTO.ColumnDTO column : table.getColumns()) {
             sql.append("\"").append(column.getName()).append("\" ")
                     .append(mapColumnTypeToSqlType(column.getType()))
                     .append(", ");
@@ -116,10 +116,10 @@ public class ExcelUploadService {
         return sql.toString();
     }
 
-    private String generateInsertSql(String tableName, TableDto table, List<Object> row) {
+    private String generateInsertSql(String tableName, TableDTO table, List<Object> row) {
         StringBuilder sql = new StringBuilder("INSERT INTO \"" + tableName + "\" (");
 
-        for (TableDto.ColumnDto column : table.getColumns()) {
+        for (TableDTO.ColumnDTO column : table.getColumns()) {
             sql.append("\"").append(column.getName()).append("\", ");
         }
 
@@ -146,12 +146,12 @@ public class ExcelUploadService {
         return sql.toString();
     }
 
-    private String mapColumnTypeToSqlType(TableDto.ColumnTypeDto columnType) {
-        if (columnType == TableDto.ColumnTypeDto.TEXT) {
+    private String mapColumnTypeToSqlType(TableDTO.ColumnTypeDTO columnType) {
+        if (columnType == TableDTO.ColumnTypeDTO.TEXT) {
             return "TEXT";
-        } else if (columnType == TableDto.ColumnTypeDto.NUMBER) {
+        } else if (columnType == TableDTO.ColumnTypeDTO.NUMBER) {
             return "DOUBLE PRECISION";
-        } else if (columnType == TableDto.ColumnTypeDto.DATE) {
+        } else if (columnType == TableDTO.ColumnTypeDTO.DATE) {
             return "DATE";
         } else {
             throw new IllegalArgumentException("Unknown column type: " + columnType);

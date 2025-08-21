@@ -1,4 +1,4 @@
-package com.aidb.aidb_backend.model.dto;
+package com.aidb.aidb_backend.model.api;
 
 import lombok.Data;
 

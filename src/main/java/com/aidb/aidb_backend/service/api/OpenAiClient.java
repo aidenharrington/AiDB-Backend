@@ -66,7 +66,7 @@ public class OpenAiClient {
         } catch (OpenAiApiException e) {
             throw e; // Propagate custom exception
         } catch (Exception e) {
-            throw new OpenAiApiException("Error fetching SQL translation from OpenAI", HttpStatus.INTERNAL_SERVER_ERROR, e);
+            throw new OpenAiApiException("Error fetching SQL translation from OpenAI", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

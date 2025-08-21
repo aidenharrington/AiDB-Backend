@@ -1,4 +1,4 @@
-package com.aidb.aidb_backend.config;
+package com.aidb.aidb_backend.config.db;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

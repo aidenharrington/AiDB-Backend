@@ -1,7 +1,7 @@
 package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.exception.http.ForbiddenException;
-import com.aidb.aidb_backend.model.dto.QueryDto;
+import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.model.firestore.Status;
 import com.aidb.aidb_backend.service.api.OpenAiClient;
@@ -31,6 +31,7 @@ public class QueryTranslatorOrchestrator {
     }
 
     public Query translateToSql(String userId, Query query) {
+        query.setUserId(userId);
         String sqlQuery = openAiClient.getSqlTranslation(query.getNlQuery());
         query.setSqlQuery(sqlQuery);
         query.setStatus(Status.TRANSLATED);
@@ -40,11 +41,11 @@ public class QueryTranslatorOrchestrator {
         return query;
     }
 
-    public List<QueryDto> getAllQueryDtos(String userId) throws ExecutionException, InterruptedException {
+    public List<QueryDTO> getAllQueryDTOs(String userId) throws ExecutionException, InterruptedException {
         return queryService.getAllQueryDtos(userId);
     }
 
-    public Query getQueryById(String queryId, String userId) throws ExecutionException, InterruptedException {
+    public Query getQueryById(String userId, String queryId) throws ExecutionException, InterruptedException {
         Query query = queryService.getQueryById(queryId);
 
         if (query != null && query.getUserId().equalsIgnoreCase(userId)) {

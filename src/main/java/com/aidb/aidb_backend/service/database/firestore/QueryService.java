@@ -1,6 +1,6 @@
 package com.aidb.aidb_backend.service.database.firestore;
 
-import com.aidb.aidb_backend.model.dto.QueryDto;
+import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
@@ -37,7 +37,7 @@ public class QueryService {
     }
 
     public String addOrUpdateQuery(Query query) throws ExecutionException, InterruptedException {
-        Long queryId = query.getId();
+        String queryId = query.getId();
 
         if (queryId != null) {
             DocumentReference docRef = firestore.collection(QUERY_COLLECTION).document(queryId.toString());
@@ -47,7 +47,7 @@ public class QueryService {
             if (docSnap.exists()) {
                 ApiFuture<WriteResult> writeResult = docRef.set(query);
                 writeResult.get();
-                return queryId.toString();
+                return queryId;
             }
         }
 
@@ -64,7 +64,7 @@ public class QueryService {
         return snapshot.exists() ? snapshot.toObject(Query.class) : null;
     }
 
-    public List<QueryDto> getAllQueryDtos(String userId) throws ExecutionException, InterruptedException {
+    public List<QueryDTO> getAllQueryDtos(String userId) throws ExecutionException, InterruptedException {
         CollectionReference queriesRef = firestore.collection(QUERY_COLLECTION);
         ApiFuture<QuerySnapshot> future = queriesRef
                 .whereEqualTo(USER_ID, userId)
@@ -72,11 +72,11 @@ public class QueryService {
                 .get();
         List<QueryDocumentSnapshot> documents = future.get().getDocuments();
 
-        List<QueryDto> results = new ArrayList<>();
+        List<QueryDTO> results = new ArrayList<>();
 
         for (QueryDocumentSnapshot doc : documents) {
             Query query = doc.toObject(Query.class);
-            QueryDto queryDto = new QueryDto(query);
+            QueryDTO queryDto = new QueryDTO(query);
             results.add(queryDto);
         }
 
