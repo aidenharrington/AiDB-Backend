@@ -45,7 +45,7 @@ class ProjectOrchestratorTest {
     }
 
     @Test
-    void uploadExcel_success_callsServicesInOrder_andReturnsDto() throws Exception {
+    void uploadExcel_Deprecated_success_callsServicesInOrder_andReturnsDto() throws Exception {
         String userId = "user-1";
         Long projectId = 42L;
         MultipartFile file = mock(MultipartFile.class);
@@ -55,41 +55,41 @@ class ProjectOrchestratorTest {
         when(parserService.parseExcelFile(any())).thenReturn(excelData);
 
         Project project = new Project();
-        when(projectService.getProjectById(userId, projectId)).thenReturn(project);
+        when(projectService.getProject(userId, projectId)).thenReturn(project);
 
         ProjectDTO expectedDto = new ProjectDTO();
-        when(projectService.convertToDto(project)).thenReturn(expectedDto);
+        when(projectService.convertProjectToDTO(project)).thenReturn(expectedDto);
 
-        ProjectDTO result = orchestrator.uploadExcel(userId, projectId, file);
+        ProjectDTO result = orchestrator.uploadExcel_Deprecated(userId, projectId, file);
 
         assertSame(expectedDto, result);
         verify(parserService).parseExcelFile(any());
         verify(dataValidatorService).validateData(excelData);
-        verify(projectService).getProjectById(userId, projectId);
+        verify(projectService).getProject(userId, projectId);
         verify(excelUploadService).upload(project, excelData);
-        verify(projectService).convertToDto(project);
+        verify(projectService).convertProjectToDTO(project);
     }
 
     @Test
-    void uploadExcel_propagatesIOExceptionFromParser() throws Exception {
+    void uploadExcel_Deprecated_propagatesIOExceptionFromParser() throws Exception {
         MultipartFile file = mock(MultipartFile.class);
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
         when(parserService.parseExcelFile(any())).thenThrow(new IOException("bad file"));
 
-        assertThrows(IOException.class, () -> orchestrator.uploadExcel("user", 1L, file));
+        assertThrows(IOException.class, () -> orchestrator.uploadExcel_Deprecated("user", 1L, file));
         verifyNoInteractions(dataValidatorService, projectService, excelUploadService);
     }
 
     @Test
-    void uploadExcel_propagatesValidationException() throws Exception {
+    void uploadExcel_Deprecated_propagatesValidationException() throws Exception {
         MultipartFile file = mock(MultipartFile.class);
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
         ExcelDataDTO excelData = new ExcelDataDTO();
         when(parserService.parseExcelFile(any())).thenReturn(excelData);
         doThrow(new ExcelValidationException("invalid", null)).when(dataValidatorService).validateData(excelData);
 
-        assertThrows(ExcelValidationException.class, () -> orchestrator.uploadExcel("user", 1L, file));
-        verify(projectService, never()).getProjectById(anyString(), anyLong());
+        assertThrows(ExcelValidationException.class, () -> orchestrator.uploadExcel_Deprecated("user", 1L, file));
+        verify(projectService, never()).getProject(anyString(), anyLong());
         verify(excelUploadService, never()).upload(any(), any());
     }
 }

@@ -1,8 +1,10 @@
 package com.aidb.aidb_backend.model.postgres;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.List;
 
 
@@ -20,6 +22,11 @@ public class Project {
     private String userId;
 
 
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<TableMetadata> tables;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
 }

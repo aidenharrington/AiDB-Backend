@@ -1,74 +1,67 @@
 package com.aidb.aidb_backend.service.util.excel;
 
 import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
-import com.aidb.aidb_backend.model.dto.ProjectDTO;
-import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
 import com.aidb.aidb_backend.model.dto.TableDTO;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
-import java.io.InputStream;
 import java.io.IOException;
-import java.util.*;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 
 @Service
-public class ExcelParserService {
+public class ExcelParserService_Deprecated {
 
-    public ProjectDTO parseExcelFile(ProjectOverviewDTO projectOverview, Set<String> tableNames, InputStream fileInputStream) throws IOException {
+    public ExcelDataDTO parseExcelFile(InputStream fileInputStream) throws IOException {
         try (Workbook workbook = new XSSFWorkbook(fileInputStream)) {
-            NameDeduplicationContext deduplicationContext = new NameDeduplicationContext(tableNames);
-
-            ProjectDTO project = new ProjectDTO();
-            // TODO populate project with projectOverview fields
-            // TODO populate tableMetadata fields using ExcelNameService
+            ExcelDataDTO excelData = new ExcelDataDTO();
             List<TableDTO> tables = new ArrayList<>();
 
             // Iterate through each sheet (table)
             for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
                 Sheet sheet = workbook.getSheetAt(sheetIndex);
-                TableDTO table = createTable(sheet, deduplicationContext);
+                TableDTO table = createTable(sheet);
 
+                List<List<Object>> rows = parseRows(sheet, table.getColumns());
+                table.setRows(rows);
                 tables.add(table);
 
             }
 
-            project.setTables(tables);
+            excelData.setTables(tables);
 
-            return project;
+            return excelData;
         }
     }
 
-    private TableDTO createTable(Sheet sheet, NameDeduplicationContext deduplicationContext) {
+    private TableDTO createTable(Sheet sheet) {
         TableDTO table = new TableDTO();
-        String sanitizedName = ExcelNameService.sanitize(sheet.getSheetName(), true);
-        String dedupedName = deduplicationContext.deduplicate(sanitizedName, true);
-        table.setFileName(dedupedName);
+        String fileName = ExcelSanitizerService.formatString(sheet.getSheetName());
+        table.setFileName(fileName);
 
-        List<TableDTO.ColumnDTO> columns = parseColumns(sheet, deduplicationContext);
+        List<TableDTO.ColumnDTO> columns = parseColumns(sheet);
         table.setColumns(columns);
-
-        List<List<Object>> rows = parseRows(sheet, table.getColumns());
-        table.setRows(rows);
 
         return table;
     }
 
-    private List<TableDTO.ColumnDTO> parseColumns (Sheet sheet, NameDeduplicationContext deduplicationContext) {
+    private List<TableDTO.ColumnDTO> parseColumns (Sheet sheet) {
         List<TableDTO.ColumnDTO> columns = new ArrayList<>();
         Row headerRow = sheet.getRow(0);
+        Iterator<Cell> headerIterator = headerRow.cellIterator();
 
-        if (headerRow != null) {
-            for (Cell cell : headerRow) {
-                TableDTO.ColumnDTO column = new TableDTO.ColumnDTO();
+        while (headerIterator.hasNext()) {
+            Cell cell = headerIterator.next();
+            TableDTO.ColumnDTO column = new TableDTO.ColumnDTO();
 
-                String sanitizedName = ExcelNameService.sanitize(cell.getStringCellValue(), false);
-                String dedupedName = deduplicationContext.deduplicate(sanitizedName, false);
-                column.setName(dedupedName);
-
-                column.setType(inferColumnType(sheet, cell));
-                columns.add(column);
-            }
+            String name = ExcelSanitizerService.formatColumnName(cell.getStringCellValue());
+            column.setName(name);
+            column.setType(inferColumnType(sheet, cell));
+            columns.add(column);
         }
 
         return columns;

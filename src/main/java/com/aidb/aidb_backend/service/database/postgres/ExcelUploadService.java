@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -48,17 +49,18 @@ public class ExcelUploadService {
             // Save metadata: TableMetadata
             TableMetadata tableMetadata = new TableMetadata();
             tableMetadata.setId(snowflakeIdGenerator.nextId());
-            tableMetadata.setProject(project);
+            tableMetadata.setProjectId(project.getId());
             tableMetadata.setFileName(tableDto.getFileName());
             tableMetadata.setDisplayName(displayName);
             tableMetadata.setTableName(tableName);
+            tableMetadata.setCreatedAt(Instant.now());
             tableMetadataRepository.save(tableMetadata);
 
             // Save metadata: Columns
             for (TableDTO.ColumnDTO columnDto : tableDto.getColumns()) {
                 ColumnMetadata columnMetadata = new ColumnMetadata();
                 columnMetadata.setId(snowflakeIdGenerator.nextId());
-                columnMetadata.setTable(tableMetadata);
+                columnMetadata.setTableId(tableMetadata.getId());
                 columnMetadata.setName(columnDto.getName());
                 columnMetadata.setType(columnDto.getType().name());
                 columnMetadataRepository.save(columnMetadata);

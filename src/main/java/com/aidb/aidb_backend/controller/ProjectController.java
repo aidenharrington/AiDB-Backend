@@ -35,7 +35,7 @@ public class ProjectController extends BaseController {
         return handleRequest(authToken,
                 null,
                 -1,
-                (userId, args) -> projectService.getProjectOverviewDTOsByUserId(userId)
+                (userId, args) -> projectService.getProjectOverviewDTOs(userId)
         );
     }
 
@@ -79,7 +79,7 @@ public class ProjectController extends BaseController {
                    Long projectIdLong = (Long) args[0];
                    MultipartFile multipartFile = (MultipartFile) args[1];
 
-                   return projectOrchestrator.uploadExcel(userId, projectIdLong, multipartFile);
+                   return projectOrchestrator.uploadExcel_Deprecated(userId, projectIdLong, multipartFile);
                 }, Long.valueOf(projectId), file
             );
     }

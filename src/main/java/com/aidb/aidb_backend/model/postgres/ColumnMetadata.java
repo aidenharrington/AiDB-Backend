@@ -11,9 +11,8 @@ public class ColumnMetadata {
     @Id
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "table_id", nullable = false)
-    private TableMetadata table;
+    @Column(name = "table_id", nullable = false)
+    private Long tableId;
 
     private String name;
 
