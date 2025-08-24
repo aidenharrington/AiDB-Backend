@@ -79,7 +79,7 @@ public class ProjectController extends BaseController {
                    Long projectIdLong = (Long) args[0];
                    MultipartFile multipartFile = (MultipartFile) args[1];
 
-                   return projectOrchestrator.uploadExcel_Deprecated(userId, projectIdLong, multipartFile);
+                   return projectOrchestrator.uploadExcel(userId, projectIdLong, multipartFile);
                 }, Long.valueOf(projectId), file
             );
     }

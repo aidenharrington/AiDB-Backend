@@ -17,8 +17,10 @@ public class TableMetadata {
     @Id
     private Long id;
 
-    @Column(name = "project_id", nullable = false)
-    private Long projectId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    @JsonBackReference
+    private Project project;
 
     @Column(name = "file_name")
     private String fileName;
@@ -29,7 +31,7 @@ public class TableMetadata {
     @Column(name = "table_name")
     private String tableName;
 
-    @OneToMany(mappedBy = "table", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "tableMetadata", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<ColumnMetadata> columns;
 

@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.service.database.postgres;
 
 import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
+import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.TableDTO;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.model.postgres.TableMetadata;
@@ -37,19 +38,23 @@ public class ExcelUploadService {
     private SnowflakeIdGenerator snowflakeIdGenerator;
 
     @Transactional
-    public void upload(Project project, ExcelDataDTO excelData) {
-        for (TableDTO tableDto : excelData.getTables()) {
+    public void upload(Long projectId, ProjectDTO project) {
+        for (TableDTO tableDto : project.getTables()) {
 
             // Generate unique display name
-            String displayName = generateUniqueDisplayName(project, tableDto.getFileName());
+            String displayName = tableDto.getDisplayName();
 
             // Generate physical table name using hash
-            String tableName = generateTableName(project.getId(), displayName);
+            String tableName = generateTableName(projectId, displayName);
+
+            // Create a stub Project object with only ID so Hibernate doesn't complain
+            Project stubProject = new Project();
+            stubProject.setId(projectId);
 
             // Save metadata: TableMetadata
             TableMetadata tableMetadata = new TableMetadata();
             tableMetadata.setId(snowflakeIdGenerator.nextId());
-            tableMetadata.setProjectId(project.getId());
+            tableMetadata.setProject(stubProject);
             tableMetadata.setFileName(tableDto.getFileName());
             tableMetadata.setDisplayName(displayName);
             tableMetadata.setTableName(tableName);
@@ -60,7 +65,7 @@ public class ExcelUploadService {
             for (TableDTO.ColumnDTO columnDto : tableDto.getColumns()) {
                 ColumnMetadata columnMetadata = new ColumnMetadata();
                 columnMetadata.setId(snowflakeIdGenerator.nextId());
-                columnMetadata.setTableId(tableMetadata.getId());
+                columnMetadata.setTableMetadata(tableMetadata);
                 columnMetadata.setName(columnDto.getName());
                 columnMetadata.setType(columnDto.getType().name());
                 columnMetadataRepository.save(columnMetadata);
@@ -78,16 +83,18 @@ public class ExcelUploadService {
         }
     }
 
-    private String generateUniqueDisplayName(Project project, String baseName) {
-        String displayName = baseName;
-        int suffix = 1;
+    // TODO - Remove
 
-        while (tableMetadataRepository.existsByProjectAndDisplayName(project, displayName)) {
-            displayName = baseName + " (" + suffix++ + ")";
-        }
-
-        return displayName;
-    }
+//    private String generateUniqueDisplayName(Project project, String baseName) {
+//        String displayName = baseName;
+//        int suffix = 1;
+//
+//        while (tableMetadataRepository.existsByProjectAndDisplayName(project, displayName)) {
+//            displayName = baseName + " (" + suffix++ + ")";
+//        }
+//
+//        return displayName;
+//    }
 
     private String generateTableName(Long projectId, String displayName) {
         try {

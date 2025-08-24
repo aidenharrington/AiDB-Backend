@@ -18,8 +18,8 @@ public interface TableMetadataRepository extends JpaRepository<TableMetadata, Lo
     @Query("""
     SELECT t.tableName
     FROM TableMetadata t
-    JOIN Project p ON t.projectId = p.id
-    WHERE t.projectId = :projectId AND p.userId = :userId
+    JOIN t.project p
+    WHERE t.project.id = :projectId AND p.userId = :userId
 """)
     Set<String> findTableNamesByProjectIdAndUserId(@Param("userId") String userId,
                                                    @Param("projectId") Long projectId);

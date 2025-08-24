@@ -1,19 +1,11 @@
 package com.aidb.aidb_backend.service.util.excel;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.regex.Pattern;
 
 public class ExcelNameService {
-
-    // TODO - replace generateUniqueDisplayName
-    public String generateTableDisplayName(String sheetName, List<String> displayNames) {
-        return null;
-    }
-
-    // TODO - replace generateTableName
-    public String generatePhysicalTableName(Long projectId, String displayName) {
-        return null;
-    }
 
     private static final Pattern INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9_]+");
 

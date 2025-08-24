@@ -42,8 +42,9 @@ public class ExcelParserService {
     private TableDTO createTable(Sheet sheet, NameDeduplicationContext deduplicationContext) {
         TableDTO table = new TableDTO();
         String sanitizedName = ExcelNameService.sanitize(sheet.getSheetName(), true);
+        table.setFileName(sanitizedName);
         String dedupedName = deduplicationContext.deduplicate(sanitizedName, true);
-        table.setFileName(dedupedName);
+        table.setDisplayName(dedupedName);
 
         List<TableDTO.ColumnDTO> columns = parseColumns(sheet, deduplicationContext);
         table.setColumns(columns);

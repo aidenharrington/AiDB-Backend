@@ -53,8 +53,9 @@ public class ProjectOrchestrator {
         Set<String> tableNames = projectService.getTableNames(userId, projectId);
 
         ProjectDTO project = parserService.parseExcelFile(projectOverview, tableNames, file.getInputStream());
+        dataValidatorService.validateData(project);
 
-        // Resume
+        excelUploadService.upload(projectId, project);
 
         return project;
     }
