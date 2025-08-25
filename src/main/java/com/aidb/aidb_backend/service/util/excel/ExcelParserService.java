@@ -19,8 +19,6 @@ public class ExcelParserService {
             NameDeduplicationContext deduplicationContext = new NameDeduplicationContext(tableNames);
 
             ProjectDTO project = new ProjectDTO();
-            // TODO populate project with projectOverview fields
-            // TODO populate tableMetadata fields using ExcelNameService
             List<TableDTO> tables = new ArrayList<>();
 
             // Iterate through each sheet (table)

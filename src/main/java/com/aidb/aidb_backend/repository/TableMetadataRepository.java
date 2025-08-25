@@ -11,8 +11,6 @@ import java.util.Set;
 
 @Repository
 public interface TableMetadataRepository extends JpaRepository<TableMetadata, Long> {
-    // TODO - t&e-refactor - remove
-    boolean existsByProjectAndDisplayName(Project project, String displayName);
 
     @Query("""
     SELECT t.displayName

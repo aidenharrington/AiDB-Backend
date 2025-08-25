@@ -82,19 +82,6 @@ public class ExcelUploadService {
         }
     }
 
-    // TODO - Remove
-
-//    private String generateUniqueDisplayName(Project project, String baseName) {
-//        String displayName = baseName;
-//        int suffix = 1;
-//
-//        while (tableMetadataRepository.existsByProjectAndDisplayName(project, displayName)) {
-//            displayName = baseName + " (" + suffix++ + ")";
-//        }
-//
-//        return displayName;
-//    }
-
     private String generateTableName(Long projectId, String displayName) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
