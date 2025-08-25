@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class TableConversionService {
+public class ProjectConversionService {
 
     @Autowired
     DynamicTableRepository dynamicTableRepository;
@@ -35,7 +35,7 @@ public class TableConversionService {
         return dto;
     }
 
-    public TableDTO convertTableToTableDtoWithData(TableMetadata table) {
+    private TableDTO convertTableToTableDtoWithData(TableMetadata table) {
         TableDTO dto = new TableDTO();
         dto.setId(String.valueOf(table.getId()));
         dto.setFileName(table.getFileName());

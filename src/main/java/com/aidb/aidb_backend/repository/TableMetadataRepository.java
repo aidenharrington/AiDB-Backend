@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -16,11 +15,11 @@ public interface TableMetadataRepository extends JpaRepository<TableMetadata, Lo
     boolean existsByProjectAndDisplayName(Project project, String displayName);
 
     @Query("""
-    SELECT t.tableName
+    SELECT t.displayName
     FROM TableMetadata t
     JOIN t.project p
     WHERE t.project.id = :projectId AND p.userId = :userId
 """)
-    Set<String> findTableNamesByProjectIdAndUserId(@Param("userId") String userId,
-                                                   @Param("projectId") Long projectId);
+    Set<String> findTableDisplayNames(@Param("userId") String userId,
+                                      @Param("projectId") Long projectId);
 }

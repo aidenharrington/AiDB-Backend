@@ -25,9 +25,6 @@ public class ProjectController extends BaseController {
     @Autowired
     ProjectOrchestrator projectOrchestrator;
 
-    @Autowired
-    ProjectService projectService;
-
     private static final Logger logger = LoggerFactory.getLogger(ProjectController.class);
 
     @GetMapping
@@ -35,19 +32,19 @@ public class ProjectController extends BaseController {
         return handleRequest(authToken,
                 null,
                 -1,
-                (userId, args) -> projectService.getProjectOverviewDTOs(userId)
+                (userId, args) -> projectOrchestrator.getProjectOverviewDTOs(userId)
         );
     }
 
     @PostMapping
-    ResponseEntity<APIResponse<Project>> createProject(@RequestHeader("Authorization") String authToken, @RequestBody ProjectCreateRequest projectCreateRequest) throws Exception {
+    ResponseEntity<APIResponse<ProjectDTO>> createProject(@RequestHeader("Authorization") String authToken, @RequestBody ProjectCreateRequest projectCreateRequest) throws Exception {
         return handleRequest(authToken,
                 LimitedOperation.PROJECT,
                 1,
                 (userId, args) -> {
                     ProjectCreateRequest createRequest = (ProjectCreateRequest) args[0];
 
-                    return projectService.createProject(userId, projectCreateRequest);
+                    return projectOrchestrator.createProject(userId, projectCreateRequest);
                 }, projectCreateRequest
         );
     }
@@ -60,7 +57,7 @@ public class ProjectController extends BaseController {
                 (userId, args) -> {
                     Long projectIdLong = (Long) args[0];
 
-                    return projectService.getProjectDTO(userId, projectIdLong);
+                    return projectOrchestrator.getProjectDTO(userId, projectIdLong);
                }, Long.valueOf(projectId)
                );
 

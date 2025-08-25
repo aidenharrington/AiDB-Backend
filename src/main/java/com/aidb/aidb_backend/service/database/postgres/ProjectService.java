@@ -4,15 +4,12 @@ import com.aidb.aidb_backend.exception.ProjectNotFoundException;
 import com.aidb.aidb_backend.model.api.ProjectCreateRequest;
 import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
-import com.aidb.aidb_backend.model.dto.TableDTO;
 import com.aidb.aidb_backend.model.postgres.Project;
-import com.aidb.aidb_backend.model.postgres.TableMetadata;
-import com.aidb.aidb_backend.model.postgres.ColumnMetadata;
 import com.aidb.aidb_backend.repository.ProjectRepository;
 import com.aidb.aidb_backend.repository.TableMetadataRepository;
 import com.aidb.aidb_backend.service.util.sql.SnowflakeIdGenerator;
 
-import com.aidb.aidb_backend.service.util.sql.TableConversionService;
+import com.aidb.aidb_backend.service.util.sql.ProjectConversionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -20,8 +17,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.Map;
 
 @Service
 public class ProjectService {
@@ -36,7 +31,7 @@ public class ProjectService {
     private SnowflakeIdGenerator snowflakeIdGenerator;
 
     @Autowired
-    TableConversionService tableConversionService;
+    ProjectConversionService projectConversionService;
 
     
     @Autowired
@@ -58,7 +53,7 @@ public class ProjectService {
 
     public ProjectDTO getProjectDTO(String userId, Long projectId) {
         Project project = getProject(userId, projectId);
-        return tableConversionService.convertProjectToDTO(project);
+        return projectConversionService.convertProjectToDTO(project);
     }
 
     public Project createProject(String userId, ProjectCreateRequest projectCreateRequest) {
@@ -72,7 +67,7 @@ public class ProjectService {
     }
 
     public Set<String> getTableNames(String userId, Long projectId) {
-        return tableMetadataRepository.findTableNamesByProjectIdAndUserId(userId, projectId);
+        return tableMetadataRepository.findTableDisplayNames(userId, projectId);
     }
 }
 

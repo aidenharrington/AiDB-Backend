@@ -1,6 +1,5 @@
 package com.aidb.aidb_backend.service.util.excel;
 
-import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
 import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
 import com.aidb.aidb_backend.model.dto.TableDTO;
@@ -43,7 +42,7 @@ public class ExcelParserService {
         TableDTO table = new TableDTO();
         String sanitizedName = ExcelNameService.sanitize(sheet.getSheetName(), true);
         table.setFileName(sanitizedName);
-        String dedupedName = deduplicationContext.deduplicate(sanitizedName, true);
+        String dedupedName = deduplicationContext.deduplicate(sheet.getSheetName(), sanitizedName, true);
         table.setDisplayName(dedupedName);
 
         List<TableDTO.ColumnDTO> columns = parseColumns(sheet, deduplicationContext);
@@ -64,7 +63,7 @@ public class ExcelParserService {
                 TableDTO.ColumnDTO column = new TableDTO.ColumnDTO();
 
                 String sanitizedName = ExcelNameService.sanitize(cell.getStringCellValue(), false);
-                String dedupedName = deduplicationContext.deduplicate(sanitizedName, false);
+                String dedupedName = deduplicationContext.deduplicate(sheet.getSheetName(), sanitizedName, false);
                 column.setName(dedupedName);
 
                 column.setType(inferColumnType(sheet, cell));

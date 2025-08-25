@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 public class NameDeduplicationContext {
 
     private final Map<String, AtomicInteger> tableNameCounts = new HashMap<>();
-    private final Map<String, AtomicInteger> columnNameCounts = new HashMap<>();
+    private final Map<String, Map<String, AtomicInteger>> sheetColumnNameCounts = new HashMap<>();
     private static final Pattern SUFFIX_PATTERN = Pattern.compile("^(.*?)(?:_(\\d+))?$");
 
     /**
@@ -30,13 +30,19 @@ public class NameDeduplicationContext {
     /**
      * Deduplicate a name (table or column)
      */
-    public String deduplicate(String baseName, boolean isTable) {
-        Map<String, AtomicInteger> countsMap = isTable ? tableNameCounts : columnNameCounts;
-        AtomicInteger counter = countsMap.computeIfAbsent(baseName, k -> new AtomicInteger(0));
-        int count = counter.getAndIncrement();
+    public String deduplicate(String sheetName, String baseName, boolean isTable) {
+        if (isTable) {
+            AtomicInteger counter = tableNameCounts.computeIfAbsent(baseName, k -> new AtomicInteger(0));
+            int count = counter.getAndIncrement();
+            return count == 0 ? baseName : baseName + "_" + count;
+        } else {
+            Map<String, AtomicInteger> columnCounts =
+                    sheetColumnNameCounts.computeIfAbsent(sheetName, k -> new HashMap<>());
 
-        if (count == 0) return baseName;
-        return baseName + "_" + count;
+            AtomicInteger counter = columnCounts.computeIfAbsent(baseName, k -> new AtomicInteger(0));
+            int count = counter.getAndIncrement();
+            return count == 0 ? baseName : baseName + "_" + count;
+        }
     }
 
     /**
