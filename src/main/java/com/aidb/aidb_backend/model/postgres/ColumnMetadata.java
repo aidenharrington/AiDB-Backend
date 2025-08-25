@@ -1,5 +1,6 @@
 package com.aidb.aidb_backend.model.postgres;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -11,9 +12,10 @@ public class ColumnMetadata {
     @Id
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_id", nullable = false)
-    private TableMetadata table;
+    @JsonBackReference
+    private TableMetadata tableMetadata;
 
     private String name;
 

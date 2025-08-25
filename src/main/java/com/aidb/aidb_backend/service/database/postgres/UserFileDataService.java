@@ -1,6 +1,5 @@
 package com.aidb.aidb_backend.service.database.postgres;
 
-import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
 import com.aidb.aidb_backend.model.dto.TableDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,19 +12,6 @@ public class UserFileDataService {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    public void createTablesAndInsertData(ExcelDataDTO excelData) {
-        for (TableDTO table : excelData.getTables()) {
-            String createTableSql = generateCreateTableSql(table);
-            jdbcTemplate.execute(createTableSql);
-
-            // Insert the rows into the database
-            for (List<Object> row : table.getRows()) {
-                String insertSql = generateInsertSql(table, row);
-                jdbcTemplate.update(insertSql);
-            }
-        }
-    }
 
     private String generateCreateTableSql(TableDTO table) {
         StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS \"" + table.getTableName() + "\" (");

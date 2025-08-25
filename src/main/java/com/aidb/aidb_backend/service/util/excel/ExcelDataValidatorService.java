@@ -1,7 +1,7 @@
 package com.aidb.aidb_backend.service.util.excel;
 
 import com.aidb.aidb_backend.exception.ExcelValidationException;
-import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
+import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.TableDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -11,8 +11,8 @@ import java.util.List;
 @Service
 public class ExcelDataValidatorService {
 
-    public void validateData(ExcelDataDTO excelData) {
-        for (TableDTO table : excelData.getTables()) {
+    public void validateData(ProjectDTO project) {
+        for (TableDTO table : project.getTables()) {
             for (int rowIdx = 1; rowIdx < table.getRows().size(); rowIdx++) {
                 List<Object> row = table.getRows().get(rowIdx);
                 for (int colIdx = 0; colIdx < row.size(); colIdx++) {

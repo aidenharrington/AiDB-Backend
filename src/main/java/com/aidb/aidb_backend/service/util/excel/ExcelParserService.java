@@ -1,6 +1,7 @@
 package com.aidb.aidb_backend.service.util.excel;
 
-import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
+import com.aidb.aidb_backend.model.dto.ProjectDTO;
+import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
 import com.aidb.aidb_backend.model.dto.TableDTO;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -8,60 +9,64 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class ExcelParserService {
 
-    public ExcelDataDTO parseExcelFile(InputStream fileInputStream) throws IOException {
+    public ProjectDTO parseExcelFile(ProjectOverviewDTO projectOverview, Set<String> tableNames, InputStream fileInputStream) throws IOException {
         try (Workbook workbook = new XSSFWorkbook(fileInputStream)) {
-            ExcelDataDTO excelData = new ExcelDataDTO();
+            NameDeduplicationContext deduplicationContext = new NameDeduplicationContext(tableNames);
+
+            ProjectDTO project = new ProjectDTO();
             List<TableDTO> tables = new ArrayList<>();
 
             // Iterate through each sheet (table)
             for (int sheetIndex = 0; sheetIndex < workbook.getNumberOfSheets(); sheetIndex++) {
                 Sheet sheet = workbook.getSheetAt(sheetIndex);
-                TableDTO table = createTable(sheet);
+                TableDTO table = createTable(sheet, deduplicationContext);
 
-                List<List<Object>> rows = parseRows(sheet, table.getColumns());
-                table.setRows(rows);
                 tables.add(table);
 
             }
 
-            excelData.setTables(tables);
+            project.setTables(tables);
 
-            return excelData;
+            return project;
         }
     }
 
-    private TableDTO createTable(Sheet sheet) {
+    private TableDTO createTable(Sheet sheet, NameDeduplicationContext deduplicationContext) {
         TableDTO table = new TableDTO();
-        String fileName = ExcelSanitizerService.formatString(sheet.getSheetName());
-        table.setFileName(fileName);
+        String sanitizedName = ExcelNameService.sanitize(sheet.getSheetName(), true);
+        table.setFileName(sanitizedName);
+        String dedupedName = deduplicationContext.deduplicate(sheet.getSheetName(), sanitizedName, true);
+        table.setDisplayName(dedupedName);
 
-        List<TableDTO.ColumnDTO> columns = parseColumns(sheet);
+        List<TableDTO.ColumnDTO> columns = parseColumns(sheet, deduplicationContext);
         table.setColumns(columns);
+
+        List<List<Object>> rows = parseRows(sheet, table.getColumns());
+        table.setRows(rows);
 
         return table;
     }
 
-    private List<TableDTO.ColumnDTO> parseColumns (Sheet sheet) {
+    private List<TableDTO.ColumnDTO> parseColumns (Sheet sheet, NameDeduplicationContext deduplicationContext) {
         List<TableDTO.ColumnDTO> columns = new ArrayList<>();
         Row headerRow = sheet.getRow(0);
-        Iterator<Cell> headerIterator = headerRow.cellIterator();
 
-        while (headerIterator.hasNext()) {
-            Cell cell = headerIterator.next();
-            TableDTO.ColumnDTO column = new TableDTO.ColumnDTO();
+        if (headerRow != null) {
+            for (Cell cell : headerRow) {
+                TableDTO.ColumnDTO column = new TableDTO.ColumnDTO();
 
-            String name = ExcelSanitizerService.formatColumnName(cell.getStringCellValue());
-            column.setName(name);
-            column.setType(inferColumnType(sheet, cell));
-            columns.add(column);
+                String sanitizedName = ExcelNameService.sanitize(cell.getStringCellValue(), false);
+                String dedupedName = deduplicationContext.deduplicate(sheet.getSheetName(), sanitizedName, false);
+                column.setName(dedupedName);
+
+                column.setType(inferColumnType(sheet, cell));
+                columns.add(column);
+            }
         }
 
         return columns;

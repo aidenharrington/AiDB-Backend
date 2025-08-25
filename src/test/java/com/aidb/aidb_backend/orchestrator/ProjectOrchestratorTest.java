@@ -1,9 +1,9 @@
 package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.exception.ExcelValidationException;
-import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
+import com.aidb.aidb_backend.exception.ProjectNotFoundException;
 import com.aidb.aidb_backend.model.dto.ProjectDTO;
-import com.aidb.aidb_backend.model.postgres.Project;
+import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
 import com.aidb.aidb_backend.service.database.postgres.ExcelUploadService;
 import com.aidb.aidb_backend.service.database.postgres.ProjectService;
 import com.aidb.aidb_backend.service.util.excel.ExcelDataValidatorService;
@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -51,45 +52,78 @@ class ProjectOrchestratorTest {
         MultipartFile file = mock(MultipartFile.class);
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
 
-        ExcelDataDTO excelData = new ExcelDataDTO();
-        when(parserService.parseExcelFile(any())).thenReturn(excelData);
+        ProjectOverviewDTO projectOverview = new ProjectOverviewDTO(projectId, "Test Project", userId);
+        when(projectService.getProjectOverviewDTO(userId, projectId)).thenReturn(projectOverview);
 
-        Project project = new Project();
-        when(projectService.getProjectById(userId, projectId)).thenReturn(project);
+        Set<String> tableNames = Set.of("table1", "table2");
+        when(projectService.getTableNames(userId, projectId)).thenReturn(tableNames);
 
         ProjectDTO expectedDto = new ProjectDTO();
-        when(projectService.convertToDto(project)).thenReturn(expectedDto);
+        when(parserService.parseExcelFile(eq(projectOverview), eq(tableNames), any())).thenReturn(expectedDto);
 
         ProjectDTO result = orchestrator.uploadExcel(userId, projectId, file);
 
         assertSame(expectedDto, result);
-        verify(parserService).parseExcelFile(any());
-        verify(dataValidatorService).validateData(excelData);
-        verify(projectService).getProjectById(userId, projectId);
-        verify(excelUploadService).upload(project, excelData);
-        verify(projectService).convertToDto(project);
+        verify(projectService).getProjectOverviewDTO(userId, projectId);
+        verify(projectService).getTableNames(userId, projectId);
+        verify(parserService).parseExcelFile(eq(projectOverview), eq(tableNames), any());
+        verify(dataValidatorService).validateData(expectedDto);
+        verify(excelUploadService).upload(projectId, expectedDto);
     }
 
     @Test
     void uploadExcel_propagatesIOExceptionFromParser() throws Exception {
+        String userId = "user-1";
+        Long projectId = 1L;
         MultipartFile file = mock(MultipartFile.class);
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
-        when(parserService.parseExcelFile(any())).thenThrow(new IOException("bad file"));
 
-        assertThrows(IOException.class, () -> orchestrator.uploadExcel("user", 1L, file));
-        verifyNoInteractions(dataValidatorService, projectService, excelUploadService);
+        ProjectOverviewDTO projectOverview = new ProjectOverviewDTO(projectId, "Test Project", userId);
+        when(projectService.getProjectOverviewDTO(userId, projectId)).thenReturn(projectOverview);
+
+        Set<String> tableNames = Set.of("table1");
+        when(projectService.getTableNames(userId, projectId)).thenReturn(tableNames);
+
+        when(parserService.parseExcelFile(any(), any(), any())).thenThrow(new IOException("bad file"));
+
+        assertThrows(IOException.class, () -> orchestrator.uploadExcel(userId, projectId, file));
+        verify(dataValidatorService, never()).validateData(any());
+        verify(excelUploadService, never()).upload(anyLong(), any());
     }
 
     @Test
     void uploadExcel_propagatesValidationException() throws Exception {
+        String userId = "user-1";
+        Long projectId = 1L;
         MultipartFile file = mock(MultipartFile.class);
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(new byte[0]));
-        ExcelDataDTO excelData = new ExcelDataDTO();
-        when(parserService.parseExcelFile(any())).thenReturn(excelData);
-        doThrow(new ExcelValidationException("invalid", null)).when(dataValidatorService).validateData(excelData);
 
-        assertThrows(ExcelValidationException.class, () -> orchestrator.uploadExcel("user", 1L, file));
-        verify(projectService, never()).getProjectById(anyString(), anyLong());
-        verify(excelUploadService, never()).upload(any(), any());
+        ProjectOverviewDTO projectOverview = new ProjectOverviewDTO(projectId, "Test Project", userId);
+        when(projectService.getProjectOverviewDTO(userId, projectId)).thenReturn(projectOverview);
+
+        Set<String> tableNames = Set.of("table1");
+        when(projectService.getTableNames(userId, projectId)).thenReturn(tableNames);
+
+        ProjectDTO projectData = new ProjectDTO();
+        when(parserService.parseExcelFile(any(), any(), any())).thenReturn(projectData);
+        doThrow(new ExcelValidationException("invalid", null)).when(dataValidatorService).validateData(projectData);
+
+        assertThrows(ExcelValidationException.class, () -> orchestrator.uploadExcel(userId, projectId, file));
+        verify(excelUploadService, never()).upload(anyLong(), any());
+    }
+
+    @Test
+    void uploadExcel_throwsProjectNotFoundExceptionWhenProjectOverviewIsNull() throws Exception {
+        String userId = "user-1";
+        Long projectId = 1L;
+        MultipartFile file = mock(MultipartFile.class);
+
+        when(projectService.getProjectOverviewDTO(userId, projectId)).thenReturn(null);
+
+        assertThrows(ProjectNotFoundException.class, () -> orchestrator.uploadExcel(userId, projectId, file));
+        verify(projectService, never()).getTableNames(anyString(), anyLong());
+        verify(parserService, never()).parseExcelFile(any(), any(), any());
+        verify(dataValidatorService, never()).validateData(any());
+        verify(excelUploadService, never()).upload(anyLong(), any());
     }
 }

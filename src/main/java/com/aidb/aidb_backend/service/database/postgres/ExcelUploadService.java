@@ -1,6 +1,6 @@
 package com.aidb.aidb_backend.service.database.postgres;
 
-import com.aidb.aidb_backend.model.dto.ExcelDataDTO;
+import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.TableDTO;
 import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.model.postgres.TableMetadata;
@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -36,29 +37,34 @@ public class ExcelUploadService {
     private SnowflakeIdGenerator snowflakeIdGenerator;
 
     @Transactional
-    public void upload(Project project, ExcelDataDTO excelData) {
-        for (TableDTO tableDto : excelData.getTables()) {
+    public void upload(Long projectId, ProjectDTO project) {
+        for (TableDTO tableDto : project.getTables()) {
 
             // Generate unique display name
-            String displayName = generateUniqueDisplayName(project, tableDto.getFileName());
+            String displayName = tableDto.getDisplayName();
 
             // Generate physical table name using hash
-            String tableName = generateTableName(project.getId(), displayName);
+            String tableName = generateTableName(projectId, displayName);
+
+            // Create a stub Project object with only ID so Hibernate doesn't complain
+            Project stubProject = new Project();
+            stubProject.setId(projectId);
 
             // Save metadata: TableMetadata
             TableMetadata tableMetadata = new TableMetadata();
             tableMetadata.setId(snowflakeIdGenerator.nextId());
-            tableMetadata.setProject(project);
+            tableMetadata.setProject(stubProject);
             tableMetadata.setFileName(tableDto.getFileName());
             tableMetadata.setDisplayName(displayName);
             tableMetadata.setTableName(tableName);
+            tableMetadata.setCreatedAt(Instant.now());
             tableMetadataRepository.save(tableMetadata);
 
             // Save metadata: Columns
             for (TableDTO.ColumnDTO columnDto : tableDto.getColumns()) {
                 ColumnMetadata columnMetadata = new ColumnMetadata();
                 columnMetadata.setId(snowflakeIdGenerator.nextId());
-                columnMetadata.setTable(tableMetadata);
+                columnMetadata.setTableMetadata(tableMetadata);
                 columnMetadata.setName(columnDto.getName());
                 columnMetadata.setType(columnDto.getType().name());
                 columnMetadataRepository.save(columnMetadata);
@@ -74,17 +80,6 @@ public class ExcelUploadService {
                 jdbcTemplate.update(insertSql);
             }
         }
-    }
-
-    private String generateUniqueDisplayName(Project project, String baseName) {
-        String displayName = baseName;
-        int suffix = 1;
-
-        while (tableMetadataRepository.existsByProjectAndDisplayName(project, displayName)) {
-            displayName = baseName + " (" + suffix++ + ")";
-        }
-
-        return displayName;
     }
 
     private String generateTableName(Long projectId, String displayName) {

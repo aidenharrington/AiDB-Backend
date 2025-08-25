@@ -1,9 +1,13 @@
 package com.aidb.aidb_backend.model.postgres;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 
 @Entity
@@ -13,8 +17,9 @@ public class TableMetadata {
     @Id
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
+    @JsonBackReference
     private Project project;
 
     @Column(name = "file_name")
@@ -26,7 +31,15 @@ public class TableMetadata {
     @Column(name = "table_name")
     private String tableName;
 
-    @OneToMany(mappedBy = "table", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "tableMetadata", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<ColumnMetadata> columns;
+
+    @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private Instant createdAt;
+
+
+    // TableMetadata stores tableName but not Table object
+    // Tables are fetches using SQL such as: ProjectService.convertTableToTableDtoWithData
 }
 
