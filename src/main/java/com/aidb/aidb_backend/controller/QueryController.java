@@ -38,24 +38,18 @@ public class QueryController extends BaseController {
         return handleRequest(authToken,
                 LimitedOperation.TRANSLATION,
                 1,
-                (userId, args) -> {
-                    Query query1 = (Query) args[0];
-
-                    return queryTranslatorOrchestrator.translateToSql(userId, query);
-                }, query
+                (userId, args) ->
+                        queryTranslatorOrchestrator.translateToSql(userId, query), query
         );
     }
 
     @PostMapping
-    public ResponseEntity<APIResponse<List<Map<String, Object>>>> executeSql(@RequestHeader("Authorization") String authToken, @RequestBody Query query) throws Exception {
+    public ResponseEntity<APIResponse<List<Map<String, Object>>>> executeSql(@RequestHeader("Authorization") String authToken, @RequestBody QueryDTO query) throws Exception {
         return handleRequest(authToken,
                 LimitedOperation.QUERY,
                 1,
-                (userId, args) -> {
-                    Query query1 = (Query) args[0];
-
-                    return queryExecutionOrchestrator.executeSafeSelectQuery(userId, query);
-                }, query
+                (userId, args) ->
+                        queryExecutionOrchestrator.executeSafeSelectQuery(userId, query), query
         );
     }
 
@@ -73,11 +67,8 @@ public class QueryController extends BaseController {
         return handleRequest(authToken,
                 null,
                 -1,
-                (userId, args) -> {
-                    String queryId = (String) args[0];
-
-                    return queryTranslatorOrchestrator.getQueryById(userId, queryId);
-                }, id
+                (userId, args) ->
+                        queryTranslatorOrchestrator.getQueryById(userId, id), id
         );
     }
 

@@ -41,24 +41,18 @@ public class ProjectController extends BaseController {
         return handleRequest(authToken,
                 LimitedOperation.PROJECT,
                 1,
-                (userId, args) -> {
-                    ProjectCreateRequest createRequest = (ProjectCreateRequest) args[0];
-
-                    return projectOrchestrator.createProject(userId, projectCreateRequest);
-                }, projectCreateRequest
+                (userId, args) ->
+                        projectOrchestrator.createProject(userId, projectCreateRequest), projectCreateRequest
         );
     }
 
     @GetMapping("/{projectId}")
     public ResponseEntity<APIResponse<ProjectDTO>> getProject(@RequestHeader("Authorization") String authToken, @PathVariable String projectId) throws Exception {
-       return handleRequest(authToken,
+        return handleRequest(authToken,
             null,
                -1,
-                (userId, args) -> {
-                    Long projectIdLong = (Long) args[0];
-
-                    return projectOrchestrator.getProjectDTO(userId, projectIdLong);
-               }, Long.valueOf(projectId)
+                (userId, args) ->
+                        projectOrchestrator.getProjectDTO(userId, projectId), projectId
                );
 
     }
@@ -72,12 +66,8 @@ public class ProjectController extends BaseController {
         return handleRequest(authToken,
                 LimitedOperation.PROJECT,
                 excelDataRows,
-                (userId, args) -> {
-                   Long projectIdLong = (Long) args[0];
-                   MultipartFile multipartFile = (MultipartFile) args[1];
-
-                   return projectOrchestrator.uploadExcel(userId, projectIdLong, multipartFile);
-                }, Long.valueOf(projectId), file
+                (userId, args) ->
+                        projectOrchestrator.uploadExcel(userId, projectId, file), projectId, file
             );
     }
 }

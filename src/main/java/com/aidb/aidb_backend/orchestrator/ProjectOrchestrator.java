@@ -5,8 +5,9 @@ import com.aidb.aidb_backend.model.api.ProjectCreateRequest;
 import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
 import com.aidb.aidb_backend.model.postgres.Project;
-import com.aidb.aidb_backend.service.database.postgres.ExcelUploadService;
 import com.aidb.aidb_backend.service.database.postgres.ProjectService;
+import com.aidb.aidb_backend.service.database.postgres.TableMetadataService;
+import com.aidb.aidb_backend.service.database.postgres.user_created_tables.ExcelUploadService;
 import com.aidb.aidb_backend.service.util.excel.ExcelDataValidatorService;
 import com.aidb.aidb_backend.service.util.excel.ExcelParserService;
 import com.aidb.aidb_backend.service.util.sql.ProjectConversionService;
@@ -24,6 +25,9 @@ public class ProjectOrchestrator {
     ProjectService projectService;
 
     @Autowired
+    TableMetadataService tableMetadataService;
+
+    @Autowired
     ExcelDataValidatorService dataValidatorService;
 
     @Autowired
@@ -36,14 +40,15 @@ public class ProjectOrchestrator {
     ProjectConversionService projectConversionService;
 
 
-    public ProjectDTO uploadExcel(String userId, Long projectId, MultipartFile file) throws Exception {
+    public ProjectDTO uploadExcel(String userId, String projectIdString, MultipartFile file) throws Exception {
+        Long projectId = Long.valueOf(projectIdString);
         ProjectOverviewDTO projectOverview = projectService.getProjectOverviewDTO(userId, projectId);
 
         if (projectOverview == null) {
             throw new ProjectNotFoundException(projectId);
         }
 
-        Set<String> tableNames = projectService.getTableNames(userId, projectId);
+        Set<String> tableNames = tableMetadataService.getTableNames(userId, projectId);
 
         ProjectDTO project = parserService.parseExcelFile(projectOverview, tableNames, file.getInputStream());
         dataValidatorService.validateData(project);
@@ -58,8 +63,8 @@ public class ProjectOrchestrator {
         return projectConversionService.convertProjectToDTO(project);
     }
 
-    public ProjectDTO getProjectDTO(String userId, Long projectId) {
-        return projectService.getProjectDTO(userId, projectId);
+    public ProjectDTO getProjectDTO(String userId, String projectId) {
+        return projectService.getProjectDTO(userId, Long.valueOf(projectId));
     }
 
     public List<ProjectOverviewDTO> getProjectOverviewDTOs(String userId) {

@@ -1,37 +1,65 @@
 package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.exception.IllegalSqlException;
+import com.aidb.aidb_backend.exception.ProjectNotFoundException;
+import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.model.firestore.Status;
 import com.aidb.aidb_backend.service.database.firestore.QueryService;
-import com.aidb.aidb_backend.service.database.postgres.UserQueryDataService;
+import com.aidb.aidb_backend.service.database.postgres.TableMetadataService;
+import com.aidb.aidb_backend.service.database.postgres.user_created_tables.UserQueryDataService;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.Select;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class QueryExecutionOrchestrator {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryExecutionOrchestrator.class);
 
-    private final QueryService queryService;
-    private final UserQueryDataService userQueryDataService;
+    @Autowired
+    QueryService queryService;
 
-    public QueryExecutionOrchestrator(QueryService queryService, UserQueryDataService userQueryDataService) {
-        this.queryService = queryService;
-        this.userQueryDataService = userQueryDataService;
+    @Autowired
+    UserQueryDataService userQueryDataService;
+
+    @Autowired
+    TableMetadataService tableMetadataService;
+
+
+    public List<Map<String, Object>> executeSafeSelectQuery(String userId, QueryDTO queryDTO) {
+        Query query = new Query(queryDTO);
+        query.setUserId(userId);
+        Map<String, String> tableNameMapping = tableMetadataService.getTableNameMapping(userId, query.getProjectId());
+
+        if (tableNameMapping == null || tableNameMapping.isEmpty()) {
+            throw new ProjectNotFoundException(query.getProjectId());
+        }
+
+
+        String sql = formatSql(query.getSqlQuery(), tableNameMapping);
+
+        List<Map<String, Object>> result = userQueryDataService.executeSql(sql);
+
+        query.setStatus(Status.EXECUTED);
+        saveQueryGracefully(query);
+
+        return result;
     }
 
-    public List<Map<String, Object>> executeSafeSelectQuery(String userId, Query query) {
-        query.setUserId(userId);
-        String sql = query.getSqlQuery().trim();
+    private String formatSql(String rawSql, Map<String, String> tableNameMapping) {
+        String sql = rawSql.trim();
 
         if (containsUnsafeKeywords(sql)) {
             throw new IllegalSqlException("SQL contains disallowed operations.", HttpStatus.BAD_REQUEST);
@@ -46,12 +74,37 @@ public class QueryExecutionOrchestrator {
             throw new IllegalSqlException("Invalid SQL syntax: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
-        query.setStatus(Status.EXECUTED);
-
-        saveQueryGracefully(query);
-
-        return userQueryDataService.executeSql(sql);
+        return replaceTableNames(sql, tableNameMapping);
     }
+
+    private String replaceTableNames(String sql, Map<String, String> tableNameMapping) {
+        // Pattern to capture the FROM clause and everything until next keyword or end
+        Pattern fromPattern = Pattern.compile("(?i)\\bFROM\\b\\s+(.+?)(?=\\bWHERE\\b|\\bGROUP\\b|\\bORDER\\b|$)");
+        Matcher matcher = fromPattern.matcher(sql);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            String fromContent = matcher.group(1).trim(); // e.g., "users u, contacts c"
+            String[] tables = fromContent.split(","); // split by commas
+
+            List<String> replacedTables = new ArrayList<>();
+            for (String tablePart : tables) {
+                tablePart = tablePart.trim();
+                String[] parts = tablePart.split("\\s+"); // split by whitespace
+                String displayName = parts[0];
+                String aliasPart = tablePart.substring(displayName.length()); // preserve everything after table name
+
+                String physicalName = tableNameMapping.getOrDefault(displayName, displayName);
+                replacedTables.add(physicalName + aliasPart);
+            }
+
+            // Reconstruct the FROM clause
+            matcher.appendReplacement(sb, "FROM " + String.join(", ", replacedTables));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
 
     private boolean containsUnsafeKeywords(String sql) {
         String lower = sql.toLowerCase();

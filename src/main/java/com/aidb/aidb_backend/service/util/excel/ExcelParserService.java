@@ -19,6 +19,7 @@ public class ExcelParserService {
             NameDeduplicationContext deduplicationContext = new NameDeduplicationContext(tableNames);
 
             ProjectDTO project = new ProjectDTO();
+            project.setUserId(projectOverview.getUserId());
             List<TableDTO> tables = new ArrayList<>();
 
             // Iterate through each sheet (table)

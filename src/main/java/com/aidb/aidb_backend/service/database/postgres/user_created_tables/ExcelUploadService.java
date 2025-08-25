@@ -1,4 +1,4 @@
-package com.aidb.aidb_backend.service.database.postgres;
+package com.aidb.aidb_backend.service.database.postgres.user_created_tables;
 
 import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.TableDTO;
@@ -53,6 +53,7 @@ public class ExcelUploadService {
             // Save metadata: TableMetadata
             TableMetadata tableMetadata = new TableMetadata();
             tableMetadata.setId(snowflakeIdGenerator.nextId());
+            tableMetadata.setUserId(project.getUserId());
             tableMetadata.setProject(stubProject);
             tableMetadata.setFileName(tableDto.getFileName());
             tableMetadata.setDisplayName(displayName);

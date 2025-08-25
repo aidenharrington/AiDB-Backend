@@ -4,8 +4,9 @@ import com.aidb.aidb_backend.exception.ExcelValidationException;
 import com.aidb.aidb_backend.exception.ProjectNotFoundException;
 import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
-import com.aidb.aidb_backend.service.database.postgres.ExcelUploadService;
+import com.aidb.aidb_backend.service.database.postgres.user_created_tables.ExcelUploadService;
 import com.aidb.aidb_backend.service.database.postgres.ProjectService;
+import com.aidb.aidb_backend.service.database.postgres.TableMetadataService;
 import com.aidb.aidb_backend.service.util.excel.ExcelDataValidatorService;
 import com.aidb.aidb_backend.service.util.excel.ExcelParserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,9 @@ class ProjectOrchestratorTest {
 
     @Mock
     private ProjectService projectService;
+
+    @Mock
+    private TableMetadataService tableMetadataService;
 
     @Mock
     private ExcelDataValidatorService dataValidatorService;
@@ -56,16 +60,16 @@ class ProjectOrchestratorTest {
         when(projectService.getProjectOverviewDTO(userId, projectId)).thenReturn(projectOverview);
 
         Set<String> tableNames = Set.of("table1", "table2");
-        when(projectService.getTableNames(userId, projectId)).thenReturn(tableNames);
+        when(tableMetadataService.getTableNames(userId, projectId)).thenReturn(tableNames);
 
         ProjectDTO expectedDto = new ProjectDTO();
         when(parserService.parseExcelFile(eq(projectOverview), eq(tableNames), any())).thenReturn(expectedDto);
 
-        ProjectDTO result = orchestrator.uploadExcel(userId, projectId, file);
+        ProjectDTO result = orchestrator.uploadExcel(userId, String.valueOf(projectId), file);
 
         assertSame(expectedDto, result);
         verify(projectService).getProjectOverviewDTO(userId, projectId);
-        verify(projectService).getTableNames(userId, projectId);
+        verify(tableMetadataService).getTableNames(userId, projectId);
         verify(parserService).parseExcelFile(eq(projectOverview), eq(tableNames), any());
         verify(dataValidatorService).validateData(expectedDto);
         verify(excelUploadService).upload(projectId, expectedDto);
@@ -82,11 +86,11 @@ class ProjectOrchestratorTest {
         when(projectService.getProjectOverviewDTO(userId, projectId)).thenReturn(projectOverview);
 
         Set<String> tableNames = Set.of("table1");
-        when(projectService.getTableNames(userId, projectId)).thenReturn(tableNames);
+        when(tableMetadataService.getTableNames(userId, projectId)).thenReturn(tableNames);
 
         when(parserService.parseExcelFile(any(), any(), any())).thenThrow(new IOException("bad file"));
 
-        assertThrows(IOException.class, () -> orchestrator.uploadExcel(userId, projectId, file));
+        assertThrows(IOException.class, () -> orchestrator.uploadExcel(userId, String.valueOf(projectId), file));
         verify(dataValidatorService, never()).validateData(any());
         verify(excelUploadService, never()).upload(anyLong(), any());
     }
@@ -102,13 +106,13 @@ class ProjectOrchestratorTest {
         when(projectService.getProjectOverviewDTO(userId, projectId)).thenReturn(projectOverview);
 
         Set<String> tableNames = Set.of("table1");
-        when(projectService.getTableNames(userId, projectId)).thenReturn(tableNames);
+        when(tableMetadataService.getTableNames(userId, projectId)).thenReturn(tableNames);
 
         ProjectDTO projectData = new ProjectDTO();
         when(parserService.parseExcelFile(any(), any(), any())).thenReturn(projectData);
         doThrow(new ExcelValidationException("invalid", null)).when(dataValidatorService).validateData(projectData);
 
-        assertThrows(ExcelValidationException.class, () -> orchestrator.uploadExcel(userId, projectId, file));
+        assertThrows(ExcelValidationException.class, () -> orchestrator.uploadExcel(userId, String.valueOf(projectId), file));
         verify(excelUploadService, never()).upload(anyLong(), any());
     }
 
@@ -120,8 +124,8 @@ class ProjectOrchestratorTest {
 
         when(projectService.getProjectOverviewDTO(userId, projectId)).thenReturn(null);
 
-        assertThrows(ProjectNotFoundException.class, () -> orchestrator.uploadExcel(userId, projectId, file));
-        verify(projectService, never()).getTableNames(anyString(), anyLong());
+        assertThrows(ProjectNotFoundException.class, () -> orchestrator.uploadExcel(userId, String.valueOf(projectId), file));
+        verify(tableMetadataService, never()).getTableNames(anyString(), anyLong());
         verify(parserService, never()).parseExcelFile(any(), any(), any());
         verify(dataValidatorService, never()).validateData(any());
         verify(excelUploadService, never()).upload(anyLong(), any());
