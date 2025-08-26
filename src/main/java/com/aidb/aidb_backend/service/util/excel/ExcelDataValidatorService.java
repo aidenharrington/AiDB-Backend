@@ -13,13 +13,17 @@ public class ExcelDataValidatorService {
 
     public void validateData(ProjectDTO project) {
         for (TableDTO table : project.getTables()) {
+            // Skip first row since that's the inferred type
             for (int rowIdx = 1; rowIdx < table.getRows().size(); rowIdx++) {
                 List<Object> row = table.getRows().get(rowIdx);
                 for (int colIdx = 0; colIdx < row.size(); colIdx++) {
                     Object cellValue = row.get(colIdx);
                     TableDTO.ColumnTypeDTO columnType = table.getColumns().get(colIdx).getType();
                     if (!validateCell(cellValue, columnType)) {
-                        String message = "Validation failed for row " + rowIdx + ", column " + colIdx;
+                        // Account for header row for error message
+                        int actualRowIdx = rowIdx + 1;
+                        String message = "Validation failed for row " + actualRowIdx + ", column " + colIdx +
+                                ". Value: "+ cellValue + ". Expected type: "+ columnType;
                         throw new ExcelValidationException(message, HttpStatus.UNPROCESSABLE_ENTITY);
                     }
                 }
@@ -28,11 +32,14 @@ public class ExcelDataValidatorService {
     }
 
     private boolean validateCell(Object cellValue, TableDTO.ColumnTypeDTO columnType) {
-        return switch (cellValue) {
-            case String s when columnType.equals(TableDTO.ColumnTypeDTO.TEXT) -> true;
-            case Double v when columnType.equals(TableDTO.ColumnTypeDTO.NUMBER) -> true;
-            case java.util.Date date when columnType.equals(TableDTO.ColumnTypeDTO.DATE) -> true;
-            case null, default -> false;
+        if (cellValue == null) {
+            return false; // null is invalid unless you allow empty cells
+        }
+
+        return switch (columnType) {
+            case TEXT -> cellValue instanceof String;
+            case NUMBER -> cellValue instanceof Number;
+            case DATE -> cellValue instanceof java.util.Date;
         };
     }
 }

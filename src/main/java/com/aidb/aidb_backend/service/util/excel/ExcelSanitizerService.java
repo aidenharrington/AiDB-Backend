@@ -12,13 +12,7 @@ import java.util.Set;
 @Service
 public class ExcelSanitizerService {
 
-    public static String formatColumnName(String value) {
-        value = formatString(value);
-        // No longer required since all column names quoted
-        // value = quoteColumnNameIfReserved(value);
-
-        return value;
-    }
+    public static final String ALLOWED_CELL_CHARS_REGEX = "^[a-zA-Z0-9_@\\$%&\\-\\.,()]*$";
 
 
     public static String formatString(String value) {
@@ -36,7 +30,7 @@ public class ExcelSanitizerService {
         sanitizedValue = sanitizedValue.replace("'", "''");
 
         // Throw an error if sanitized value is empty or contains invalid characters
-        if (sanitizedValue.isEmpty() || !sanitizedValue.matches("^[a-zA-Z0-9_]*$")) {
+        if (sanitizedValue.isEmpty() || !sanitizedValue.matches(ALLOWED_CELL_CHARS_REGEX)) {
             String message = "Illegal character in cell: " + sanitizedValue;
             throw new ExcelValidationException(message, HttpStatus.UNPROCESSABLE_ENTITY);
         }
@@ -52,17 +46,5 @@ public class ExcelSanitizerService {
         // Format the date as a string in the format that PostgreSQL accepts
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return dateFormat.format(date); // Do not add quotes here
-    }
-
-    public static String quoteColumnNameIfReserved(String colName) {
-
-        // List of common SQL reserved keywords
-        Set<String> reservedKeywords = SqlKeywords.RESERVED_KEYWORDS;
-
-        if (reservedKeywords.contains(colName.toUpperCase())) {
-            return "\"" + colName + "\"";
-        }
-
-        return colName;
     }
 }

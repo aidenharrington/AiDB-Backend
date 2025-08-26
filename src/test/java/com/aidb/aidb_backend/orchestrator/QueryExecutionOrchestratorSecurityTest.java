@@ -7,6 +7,7 @@ import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.service.database.firestore.QueryService;
 import com.aidb.aidb_backend.service.database.postgres.TableMetadataService;
 import com.aidb.aidb_backend.service.database.postgres.user_created_tables.UserQueryDataService;
+import net.sf.jsqlparser.JSQLParserException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -66,14 +67,15 @@ class QueryExecutionOrchestratorSecurityTest {
 
         Map<String, String> tableMapping = Map.of("users", "user_table_123", "admin_users", "admin_table_123");
         when(tableMetadataService.getTableNameMapping("user-1", 123L)).thenReturn(tableMapping);
-        when(userQueryDataService.executeSql("SELECT name FROM user_table_123 UNION SELECT password FROM admin_users"))
-            .thenReturn(List.of());
+        when(userQueryDataService.executeSql(
+                "SELECT name FROM user_table_123 UNION SELECT password FROM admin_table_123"))
+                .thenReturn(List.of());
 
         // UNION is actually allowed in SELECT statements
         List<Map<String, Object>> result = orchestrator.executeSafeSelectQuery("user-1", queryDTO);
         assertEquals(0, result.size());
-        verify(userQueryDataService).executeSql("SELECT name FROM user_table_123 UNION SELECT password FROM admin_users");
-    }
+        verify(userQueryDataService).executeSql(
+                "SELECT name FROM user_table_123 UNION SELECT password FROM admin_table_123");    }
 
     @Test
     void executeSafeSelectQuery_blocksDropTableInjection() {
@@ -212,24 +214,24 @@ class QueryExecutionOrchestratorSecurityTest {
 
     // Table Name Mapping Security Tests
     @Test
-    void executeSafeSelectQuery_replacesTableNamesCorrectly() {
+    void executeSafeSelectQuery_replacesTableNamesCorrectly() throws JSQLParserException {
         QueryDTO queryDTO = new QueryDTO();
         queryDTO.setSqlQuery("SELECT * FROM users WHERE id = 1");
         queryDTO.setProjectId("123");
 
         Map<String, String> tableMapping = Map.of("users", "user_table_123_secure");
         when(tableMetadataService.getTableNameMapping("user-1", 123L)).thenReturn(tableMapping);
-        when(userQueryDataService.executeSql("SELECT * FROM user_table_123_secureWHERE id = 1"))
+        when(userQueryDataService.executeSql("SELECT * FROM user_table_123_secure WHERE id = 1"))
             .thenReturn(List.of());
 
         List<Map<String, Object>> result = orchestrator.executeSafeSelectQuery("user-1", queryDTO);
 
         assertEquals(0, result.size()); // Fixing expected result based on mock setup
-        verify(userQueryDataService).executeSql("SELECT * FROM user_table_123_secureWHERE id = 1");
+        verify(userQueryDataService).executeSql("SELECT * FROM user_table_123_secure WHERE id = 1");
     }
 
     @Test
-    void executeSafeSelectQuery_replacesMultipleTableNames() {
+    void executeSafeSelectQuery_replacesMultipleTableNames() throws JSQLParserException {
         QueryDTO queryDTO = new QueryDTO();
         queryDTO.setSqlQuery("SELECT u.name, c.email FROM users u, contacts c WHERE u.id = c.user_id");
         queryDTO.setProjectId("123");
@@ -245,11 +247,11 @@ class QueryExecutionOrchestratorSecurityTest {
         List<Map<String, Object>> result = orchestrator.executeSafeSelectQuery("user-1", queryDTO);
 
         assertEquals(0, result.size()); // Fixing expected result based on mock setup
-        verify(userQueryDataService).executeSql("SELECT u.name, c.email FROM user_table_123_secure u, contact_table_123_secure cWHERE u.id = c.user_id");
+        verify(userQueryDataService).executeSql("SELECT u.name, c.email FROM user_table_123_secure u, contact_table_123_secure c WHERE u.id = c.user_id");
     }
 
     @Test
-    void executeSafeSelectQuery_preservesUnmappedTableNames() {
+    void executeSafeSelectQuery_preservesUnmappedTableNames() throws JSQLParserException {
         QueryDTO queryDTO = new QueryDTO();
         queryDTO.setSqlQuery("SELECT * FROM unknown_table");
         queryDTO.setProjectId("123");

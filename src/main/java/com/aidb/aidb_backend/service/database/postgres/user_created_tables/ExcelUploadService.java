@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ExcelUploadService {
@@ -77,8 +78,7 @@ public class ExcelUploadService {
 
             // Insert data into physical table
             for (List<Object> row : tableDto.getRows()) {
-                String insertSql = generateInsertSql(tableName, tableDto, row);
-                jdbcTemplate.update(insertSql);
+                insertTable(tableName, tableDto, row);
             }
         }
     }
@@ -112,34 +112,18 @@ public class ExcelUploadService {
         return sql.toString();
     }
 
-    private String generateInsertSql(String tableName, TableDTO table, List<Object> row) {
-        StringBuilder sql = new StringBuilder("INSERT INTO \"" + tableName + "\" (");
+    private void insertTable(String tableName, TableDTO table, List<Object> row) {
+        // Build SQL with placeholders `?` for JdbcTemplate
+        String sql = "INSERT INTO \"" + tableName + "\" (" +
+                table.getColumns().stream()
+                        .map(c -> "\"" + c.getName() + "\"")
+                        .collect(Collectors.joining(", ")) +
+                ") VALUES (" +
+                table.getColumns().stream().map(c -> "?").collect(Collectors.joining(", ")) +
+                ")";
 
-        for (TableDTO.ColumnDTO column : table.getColumns()) {
-            sql.append("\"").append(column.getName()).append("\", ");
-        }
-
-        sql.setLength(sql.length() - 2);
-        sql.append(") VALUES (");
-
-        for (Object value : row) {
-            if (value == null) {
-                sql.append("NULL, ");
-            } else if (value instanceof String) {
-                sql.append("'").append(escapeSql((String) value)).append("', ");
-            } else if (value instanceof java.util.Date) {
-                // Convert java.util.Date to SQL timestamp string
-                java.sql.Timestamp ts = new java.sql.Timestamp(((java.util.Date) value).getTime());
-                sql.append("'").append(ts.toString()).append("', ");
-            } else {
-                sql.append(value).append(", ");
-            }
-        }
-
-        sql.setLength(sql.length() - 2);
-        sql.append(");");
-
-        return sql.toString();
+        // Execute with JdbcTemplate and pass parameters
+        jdbcTemplate.update(sql, row.toArray());
     }
 
     private String mapColumnTypeToSqlType(TableDTO.ColumnTypeDTO columnType) {

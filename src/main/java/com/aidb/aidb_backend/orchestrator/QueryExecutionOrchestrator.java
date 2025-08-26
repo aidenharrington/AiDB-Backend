@@ -8,6 +8,8 @@ import com.aidb.aidb_backend.model.firestore.Status;
 import com.aidb.aidb_backend.service.database.firestore.QueryService;
 import com.aidb.aidb_backend.service.database.postgres.TableMetadataService;
 import com.aidb.aidb_backend.service.database.postgres.user_created_tables.UserQueryDataService;
+import com.aidb.aidb_backend.service.util.sql.SqlTableNameReplacer;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.select.Select;
@@ -38,7 +40,7 @@ public class QueryExecutionOrchestrator {
     TableMetadataService tableMetadataService;
 
 
-    public List<Map<String, Object>> executeSafeSelectQuery(String userId, QueryDTO queryDTO) {
+    public List<Map<String, Object>> executeSafeSelectQuery(String userId, QueryDTO queryDTO) throws JSQLParserException {
         Query query = new Query(queryDTO);
         query.setUserId(userId);
         Map<String, String> tableNameMapping = tableMetadataService.getTableNameMapping(userId, query.getProjectId());
@@ -58,7 +60,7 @@ public class QueryExecutionOrchestrator {
         return result;
     }
 
-    private String formatSql(String rawSql, Map<String, String> tableNameMapping) {
+    private String formatSql(String rawSql, Map<String, String> tableNameMapping) throws JSQLParserException {
         String sql = rawSql.trim();
 
         if (containsUnsafeKeywords(sql)) {
@@ -74,7 +76,9 @@ public class QueryExecutionOrchestrator {
             throw new IllegalSqlException("Invalid SQL syntax: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
 
-        return replaceTableNames(sql, tableNameMapping);
+        SqlTableNameReplacer tableNameReplacer = new SqlTableNameReplacer(tableNameMapping);
+
+        return tableNameReplacer.replaceTables(sql);
     }
 
     private String replaceTableNames(String sql, Map<String, String> tableNameMapping) {

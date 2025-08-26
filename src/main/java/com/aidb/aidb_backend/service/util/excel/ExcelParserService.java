@@ -115,7 +115,7 @@ public class ExcelParserService {
         if (cellType == TableDTO.ColumnTypeDTO.TEXT) {
             return ExcelSanitizerService.formatString(cell.getStringCellValue());
         } else if (cellType == TableDTO.ColumnTypeDTO.DATE) {
-            return ExcelSanitizerService.formatDate(cell.getDateCellValue());
+            return cell.getDateCellValue();
         } else if (cellType == TableDTO.ColumnTypeDTO.NUMBER) {
             return cell.getNumericCellValue();
         }

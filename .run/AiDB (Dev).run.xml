@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="AiDB (Dev)" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.aidb.aidb_backend.AidbBackendApplication" />
+    <module name="aidb-backend" />
+    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=dev " />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
