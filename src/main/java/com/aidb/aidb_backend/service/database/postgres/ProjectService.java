@@ -25,17 +25,10 @@ public class ProjectService {
     private ProjectRepository projectRepository;
 
     @Autowired
-    private TableMetadataRepository tableMetadataRepository;
-
-    @Autowired
     private SnowflakeIdGenerator snowflakeIdGenerator;
 
     @Autowired
     ProjectConversionService projectConversionService;
-
-    
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
 
     public List<ProjectOverviewDTO> getProjectOverviewDTOs(String userId) {
@@ -66,8 +59,6 @@ public class ProjectService {
         return projectRepository.save(project);
     }
 
-    public Set<String> getTableNames(String userId, Long projectId) {
-        return tableMetadataRepository.findTableDisplayNames(userId, projectId);
-    }
+
 }
 

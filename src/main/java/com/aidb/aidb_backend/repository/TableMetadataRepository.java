@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Set;
 
 @Repository
@@ -20,4 +21,7 @@ public interface TableMetadataRepository extends JpaRepository<TableMetadata, Lo
 """)
     Set<String> findTableDisplayNames(@Param("userId") String userId,
                                       @Param("projectId") Long projectId);
+
+    List<TableMetadata> findByProject_IdAndUserId(Long projectId, String userId);
+
 }

@@ -19,6 +19,7 @@ public class ExcelParserService {
             NameDeduplicationContext deduplicationContext = new NameDeduplicationContext(tableNames);
 
             ProjectDTO project = new ProjectDTO();
+            project.setUserId(projectOverview.getUserId());
             List<TableDTO> tables = new ArrayList<>();
 
             // Iterate through each sheet (table)
@@ -114,7 +115,7 @@ public class ExcelParserService {
         if (cellType == TableDTO.ColumnTypeDTO.TEXT) {
             return ExcelSanitizerService.formatString(cell.getStringCellValue());
         } else if (cellType == TableDTO.ColumnTypeDTO.DATE) {
-            return ExcelSanitizerService.formatDate(cell.getDateCellValue());
+            return cell.getDateCellValue();
         } else if (cellType == TableDTO.ColumnTypeDTO.NUMBER) {
             return cell.getNumericCellValue();
         }

@@ -1,4 +1,4 @@
-package com.aidb.aidb_backend.service.database.postgres;
+package com.aidb.aidb_backend.service.database.postgres.user_created_tables;
 
 import com.aidb.aidb_backend.model.dto.TableDTO;
 import org.springframework.beans.factory.annotation.Autowired;

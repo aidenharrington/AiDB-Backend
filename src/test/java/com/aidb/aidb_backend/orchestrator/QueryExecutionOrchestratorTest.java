@@ -1,10 +1,13 @@
 package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.exception.IllegalSqlException;
+import com.aidb.aidb_backend.exception.ProjectNotFoundException;
+import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.model.firestore.Status;
 import com.aidb.aidb_backend.service.database.firestore.QueryService;
-import com.aidb.aidb_backend.service.database.postgres.UserQueryDataService;
+import com.aidb.aidb_backend.service.database.postgres.TableMetadataService;
+import com.aidb.aidb_backend.service.database.postgres.user_created_tables.UserQueryDataService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -27,6 +30,9 @@ class QueryExecutionOrchestratorTest {
     @Mock
     private UserQueryDataService userQueryDataService;
 
+    @Mock
+    private TableMetadataService tableMetadataService;
+
     @InjectMocks
     private QueryExecutionOrchestrator orchestrator;
 
@@ -37,23 +43,30 @@ class QueryExecutionOrchestratorTest {
 
     @Test
     void executeSafeSelectQuery_success_executesAndSavesGracefully() throws Exception {
-        Query q = new Query();
-        q.setSqlQuery("SELECT 1");
+        QueryDTO queryDTO = new QueryDTO();
+        queryDTO.setSqlQuery("SELECT 1");
+        queryDTO.setProjectId("123");
+        
+        Map<String, String> tableMapping = Map.of("users", "user_table_123");
+        when(tableMetadataService.getTableNameMapping("user-1", 123L)).thenReturn(tableMapping);
         when(userQueryDataService.executeSql("SELECT 1")).thenReturn(List.of(Map.of("?column?", 1)));
 
-        List<Map<String, Object>> result = orchestrator.executeSafeSelectQuery("user-1", q);
+        List<Map<String, Object>> result = orchestrator.executeSafeSelectQuery("user-1", queryDTO);
 
-        assertEquals("user-1", q.getUserId());
-        assertEquals(Status.EXECUTED, q.getStatus());
         assertEquals(1, result.size());
-        verify(queryService, times(1)).addOrUpdateQuery(q);
+        verify(queryService, times(1)).addOrUpdateQuery(any(Query.class));
     }
 
     @Test
     void executeSafeSelectQuery_throwsOnNonSelect() throws Exception {
-        Query q = new Query();
-        q.setSqlQuery("UPDATE users SET name='x'");
-        IllegalSqlException ex = assertThrows(IllegalSqlException.class, () -> orchestrator.executeSafeSelectQuery("user", q));
+        QueryDTO queryDTO = new QueryDTO();
+        queryDTO.setSqlQuery("UPDATE users SET name='x'");
+        queryDTO.setProjectId("123");
+        
+        Map<String, String> tableMapping = Map.of("users", "user_table_123");
+        when(tableMetadataService.getTableNameMapping("user-1", 123L)).thenReturn(tableMapping);
+        
+        IllegalSqlException ex = assertThrows(IllegalSqlException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getHttpStatus());
         verifyNoInteractions(userQueryDataService);
         verify(queryService, never()).addOrUpdateQuery(any());
@@ -61,9 +74,14 @@ class QueryExecutionOrchestratorTest {
 
     @Test
     void executeSafeSelectQuery_throwsOnInvalidSyntax() throws Exception {
-        Query q = new Query();
-        q.setSqlQuery("SELECT FROM");
-        IllegalSqlException ex = assertThrows(IllegalSqlException.class, () -> orchestrator.executeSafeSelectQuery("user", q));
+        QueryDTO queryDTO = new QueryDTO();
+        queryDTO.setSqlQuery("SELECT FROM");
+        queryDTO.setProjectId("123");
+        
+        Map<String, String> tableMapping = Map.of("users", "user_table_123");
+        when(tableMetadataService.getTableNameMapping("user-1", 123L)).thenReturn(tableMapping);
+        
+        IllegalSqlException ex = assertThrows(IllegalSqlException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getHttpStatus());
         verifyNoInteractions(userQueryDataService);
         verify(queryService, never()).addOrUpdateQuery(any());
@@ -71,26 +89,61 @@ class QueryExecutionOrchestratorTest {
 
     @Test
     void executeSafeSelectQuery_disallowsMultipleStatementsAndComments() throws Exception {
-        Query q1 = new Query();
-        q1.setSqlQuery("SELECT 1; SELECT 2");
-        assertThrows(IllegalSqlException.class, () -> orchestrator.executeSafeSelectQuery("user", q1));
+        QueryDTO queryDTO1 = new QueryDTO();
+        queryDTO1.setSqlQuery("SELECT 1; SELECT 2");
+        queryDTO1.setProjectId("123");
+        
+        Map<String, String> tableMapping = Map.of("users", "user_table_123");
+        when(tableMetadataService.getTableNameMapping("user-1", 123L)).thenReturn(tableMapping);
+        
+        assertThrows(IllegalSqlException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO1));
 
-        Query q2 = new Query();
-        q2.setSqlQuery("SELECT 1 -- drop table");
-        assertThrows(IllegalSqlException.class, () -> orchestrator.executeSafeSelectQuery("user", q2));
+        QueryDTO queryDTO2 = new QueryDTO();
+        queryDTO2.setSqlQuery("SELECT 1 -- drop table");
+        queryDTO2.setProjectId("123");
+        assertThrows(IllegalSqlException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO2));
     }
 
     @Test
     void executeSafeSelectQuery_saveGracefully_swallowsExceptions() throws Exception {
-        Query q = new Query();
-        q.setSqlQuery("SELECT 1");
+        QueryDTO queryDTO = new QueryDTO();
+        queryDTO.setSqlQuery("SELECT 1");
+        queryDTO.setProjectId("123");
+        
+        Map<String, String> tableMapping = Map.of("users", "user_table_123");
+        when(tableMetadataService.getTableNameMapping("user-1", 123L)).thenReturn(tableMapping);
         doThrow(new RuntimeException("fail")).when(queryService).addOrUpdateQuery(any(Query.class));
         when(userQueryDataService.executeSql("SELECT 1")).thenReturn(List.of());
 
-        List<Map<String, Object>> result = orchestrator.executeSafeSelectQuery("user", q);
+        List<Map<String, Object>> result = orchestrator.executeSafeSelectQuery("user-1", queryDTO);
 
         assertNotNull(result);
-        assertEquals(Status.EXECUTED, q.getStatus());
         verify(queryService, times(1)).addOrUpdateQuery(any(Query.class));
+    }
+
+    @Test
+    void executeSafeSelectQuery_throwsProjectNotFoundWhenNoTableMapping() throws Exception {
+        QueryDTO queryDTO = new QueryDTO();
+        queryDTO.setSqlQuery("SELECT 1");
+        queryDTO.setProjectId("999");
+        
+        when(tableMetadataService.getTableNameMapping("user-1", 999L)).thenReturn(null);
+        
+        assertThrows(ProjectNotFoundException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
+        verifyNoInteractions(userQueryDataService);
+        verify(queryService, never()).addOrUpdateQuery(any());
+    }
+
+    @Test
+    void executeSafeSelectQuery_throwsProjectNotFoundWhenEmptyTableMapping() throws Exception {
+        QueryDTO queryDTO = new QueryDTO();
+        queryDTO.setSqlQuery("SELECT 1");
+        queryDTO.setProjectId("999");
+        
+        when(tableMetadataService.getTableNameMapping("user-1", 999L)).thenReturn(Map.of());
+        
+        assertThrows(ProjectNotFoundException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
+        verifyNoInteractions(userQueryDataService);
+        verify(queryService, never()).addOrUpdateQuery(any());
     }
 }

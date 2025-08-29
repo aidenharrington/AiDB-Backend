@@ -22,6 +22,9 @@ public class TableMetadata {
     @JsonBackReference
     private Project project;
 
+    @Column(name = "user_id")
+    private String userId;
+
     @Column(name = "file_name")
     private String fileName;
 

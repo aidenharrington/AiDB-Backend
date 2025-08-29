@@ -1,4 +1,4 @@
-package com.aidb.aidb_backend.service.database.postgres;
+package com.aidb.aidb_backend.service.database.postgres.user_created_tables;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
