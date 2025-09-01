@@ -5,9 +5,7 @@ import com.aidb.aidb_backend.model.api.ProjectCreateRequest;
 import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
 import com.aidb.aidb_backend.model.firestore.util.LimitedOperation;
-import com.aidb.aidb_backend.model.postgres.Project;
 import com.aidb.aidb_backend.orchestrator.ProjectOrchestrator;
-import com.aidb.aidb_backend.service.database.postgres.ProjectService;
 import com.aidb.aidb_backend.service.util.excel.ExcelRowCounter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,15 +28,13 @@ public class ProjectController extends BaseController {
     @GetMapping
     public ResponseEntity<APIResponse<List<ProjectOverviewDTO>>> getProjects(@RequestHeader("Authorization") String authToken) throws Exception {
         return handleRequest(authToken,
-                null,
-                -1,
                 (userId, args) -> projectOrchestrator.getProjectOverviewDTOs(userId)
         );
     }
 
     @PostMapping
     ResponseEntity<APIResponse<ProjectDTO>> createProject(@RequestHeader("Authorization") String authToken, @RequestBody ProjectCreateRequest projectCreateRequest) throws Exception {
-        return handleRequest(authToken,
+        return handleRequestWithLimit(authToken,
                 LimitedOperation.PROJECT,
                 1,
                 (userId, args) ->
@@ -49,8 +45,6 @@ public class ProjectController extends BaseController {
     @GetMapping("/{projectId}")
     public ResponseEntity<APIResponse<ProjectDTO>> getProject(@RequestHeader("Authorization") String authToken, @PathVariable String projectId) throws Exception {
         return handleRequest(authToken,
-            null,
-               -1,
                 (userId, args) ->
                         projectOrchestrator.getProjectDTO(userId, projectId), projectId
                );
@@ -63,11 +57,34 @@ public class ProjectController extends BaseController {
                                                                @RequestParam("file")MultipartFile file) throws Exception {
         int excelDataRows = ExcelRowCounter.countRows(file);
 
-        return handleRequest(authToken,
+        return handleRequestWithLimit(authToken,
                 LimitedOperation.PROJECT,
                 excelDataRows,
                 (userId, args) ->
                         projectOrchestrator.uploadExcel(userId, projectId, file), projectId, file
             );
+    }
+
+    @DeleteMapping("/{projectId}")
+    ResponseEntity<APIResponse<String>> deleteProject(@RequestHeader("Authorization") String authToken,
+                                                      @PathVariable String projectId) throws Exception {
+        return handleRequestWithLimit(authToken,
+                LimitedOperation.PROJECT,
+                -1,
+                (userId, args) ->
+                        projectOrchestrator.deleteProject(userId, projectId), projectId
+        );
+    }
+
+    @DeleteMapping("/{projectId}/tables/{tableId}")
+    ResponseEntity<APIResponse<String>> deleteTable(@RequestHeader("Authorization") String authToken,
+                                                    @PathVariable String projectId,
+                                                    @PathVariable String tableId) throws Exception {
+        return handleRequestWithLimit(authToken,
+                LimitedOperation.PROJECT,
+                -1,
+                (userId, args) ->
+                        projectOrchestrator.deleteTable(userId, projectId, tableId), projectId, tableId
+        );
     }
 }

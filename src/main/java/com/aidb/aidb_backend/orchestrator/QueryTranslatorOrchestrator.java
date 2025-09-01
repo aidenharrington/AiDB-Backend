@@ -30,7 +30,7 @@ public class QueryTranslatorOrchestrator {
        this.openAiClient = openAiClient;
     }
 
-    public Query translateToSql(String userId, Query query) {
+    public QueryDTO translateToSql(String userId, Query query) {
         query.setUserId(userId);
         String sqlQuery = openAiClient.getSqlTranslation(query.getNlQuery());
         query.setSqlQuery(sqlQuery);
@@ -38,18 +38,18 @@ public class QueryTranslatorOrchestrator {
 
         saveQueryGracefully(query);
 
-        return query;
+        return new QueryDTO(query);
     }
 
     public List<QueryDTO> getAllQueryDTOs(String userId) throws ExecutionException, InterruptedException {
         return queryService.getAllQueryDtos(userId);
     }
 
-    public Query getQueryById(String userId, String queryId) throws ExecutionException, InterruptedException {
+    public QueryDTO getQueryById(String userId, String queryId) throws ExecutionException, InterruptedException {
         Query query = queryService.getQueryById(queryId);
 
         if (query != null && query.getUserId().equalsIgnoreCase(userId)) {
-            return query;
+            return new QueryDTO(query);
         } else {
             throw new ForbiddenException("Not authorized to access query");
         }

@@ -2,6 +2,7 @@ package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.exception.ExcelValidationException;
 import com.aidb.aidb_backend.exception.ProjectNotFoundException;
+import com.aidb.aidb_backend.exception.TableNotFoundException;
 import com.aidb.aidb_backend.model.api.ProjectCreateRequest;
 import com.aidb.aidb_backend.model.dto.ProjectDTO;
 import com.aidb.aidb_backend.model.dto.ProjectOverviewDTO;
@@ -257,5 +258,487 @@ class ProjectOrchestratorSecurityTest {
 
         assertTrue(result.isEmpty());
         verify(projectService).getProjectOverviewDTOs(userId);
+    }
+
+    // ==================== DELETE PROJECT SECURITY TESTS ====================
+
+    @Test
+    void deleteProject_preventsCrossUserAccess() {
+        String maliciousUserId = "malicious-user";
+        String legitimateUserId = "legitimate-user";
+        String projectId = "123";
+
+        // Project belongs to legitimate user, but malicious user tries to delete it
+        doThrow(new ProjectNotFoundException(123L)).when(projectService).deleteProject(maliciousUserId, 123L);
+
+        assertThrows(ProjectNotFoundException.class, () -> orchestrator.deleteProject(maliciousUserId, projectId));
+        verify(projectService).deleteProject(maliciousUserId, 123L);
+    }
+
+    @Test
+    void deleteProject_handlesMaliciousProjectId() {
+        String userId = "user-1";
+        String maliciousProjectId = "'; DROP TABLE projects; --";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, maliciousProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesSQLInjectionInProjectId() {
+        String userId = "user-1";
+        String sqlInjectionProjectId = "1 OR 1=1";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, sqlInjectionProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesUnionBasedSQLInjection() {
+        String userId = "user-1";
+        String unionInjectionProjectId = "1 UNION SELECT * FROM users";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, unionInjectionProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesCommentBasedSQLInjection() {
+        String userId = "user-1";
+        String commentInjectionProjectId = "1/*comment*/";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, commentInjectionProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesSpecialCharactersInProjectId() {
+        String userId = "user-1";
+        String specialCharsProjectId = "1;2;3";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, specialCharsProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesUnicodeCharactersInProjectId() {
+        String userId = "user-1";
+        String unicodeProjectId = "1\u0000";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, unicodeProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesExtremelyLongProjectId() {
+        String userId = "user-1";
+        String longProjectId = "1".repeat(10000);
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, longProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesWhitespaceOnlyProjectId() {
+        String userId = "user-1";
+        String whitespaceProjectId = "   ";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, whitespaceProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesTabAndNewlineInProjectId() {
+        String userId = "user-1";
+        String tabNewlineProjectId = "\t\n123\t\n";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteProject(userId, tabNewlineProjectId));
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    void deleteProject_handlesMaliciousUserId() {
+        String maliciousUserId = "'; DROP TABLE users; --";
+        String projectId = "123";
+
+        doThrow(new IllegalArgumentException("Invalid user ID")).when(projectService).deleteProject(maliciousUserId, 123L);
+
+        assertThrows(IllegalArgumentException.class, () -> orchestrator.deleteProject(maliciousUserId, projectId));
+        verify(projectService).deleteProject(maliciousUserId, 123L);
+    }
+
+    @Test
+    void deleteProject_handlesSQLInjectionInUserId() {
+        String sqlInjectionUserId = "1' OR '1'='1";
+        String projectId = "123";
+
+        doThrow(new IllegalArgumentException("Invalid user ID")).when(projectService).deleteProject(sqlInjectionUserId, 123L);
+
+        assertThrows(IllegalArgumentException.class, () -> orchestrator.deleteProject(sqlInjectionUserId, projectId));
+        verify(projectService).deleteProject(sqlInjectionUserId, 123L);
+    }
+
+    @Test
+    void deleteProject_handlesExtremelyLongUserId() {
+        String longUserId = "A".repeat(10000);
+        String projectId = "123";
+
+        doThrow(new IllegalArgumentException("User ID too long")).when(projectService).deleteProject(longUserId, 123L);
+
+        assertThrows(IllegalArgumentException.class, () -> orchestrator.deleteProject(longUserId, projectId));
+        verify(projectService).deleteProject(longUserId, 123L);
+    }
+
+    @Test
+    void deleteProject_handlesSpecialCharactersInUserId() {
+        String specialCharsUserId = "user@#$%^&*()";
+        String projectId = "123";
+
+        doThrow(new IllegalArgumentException("Invalid characters in user ID")).when(projectService).deleteProject(specialCharsUserId, 123L);
+
+        assertThrows(IllegalArgumentException.class, () -> orchestrator.deleteProject(specialCharsUserId, projectId));
+        verify(projectService).deleteProject(specialCharsUserId, 123L);
+    }
+
+    // ==================== DELETE TABLE SECURITY TESTS ====================
+
+    @Test
+    void deleteTable_preventsCrossUserAccess() {
+        String maliciousUserId = "malicious-user";
+        String legitimateUserId = "legitimate-user";
+        String projectId = "123";
+        String tableId = "456";
+
+        // Table belongs to legitimate user's project, but malicious user tries to delete it
+        doThrow(new TableNotFoundException()).when(tableMetadataService).deleteTable(maliciousUserId, 123L, 456L);
+
+        assertThrows(TableNotFoundException.class, () -> orchestrator.deleteTable(maliciousUserId, projectId, tableId));
+        verify(tableMetadataService).deleteTable(maliciousUserId, 123L, 456L);
+    }
+
+    @Test
+    void deleteTable_handlesMaliciousProjectId() {
+        String userId = "user-1";
+        String maliciousProjectId = "'; DROP TABLE projects; --";
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, maliciousProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesMaliciousTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String maliciousTableId = "'; DROP TABLE table_metadata; --";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, maliciousTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesSQLInjectionInProjectId() {
+        String userId = "user-1";
+        String sqlInjectionProjectId = "1 OR 1=1";
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, sqlInjectionProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesSQLInjectionInTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String sqlInjectionTableId = "1 OR 1=1";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, sqlInjectionTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesUnionBasedSQLInjectionInProjectId() {
+        String userId = "user-1";
+        String unionInjectionProjectId = "1 UNION SELECT * FROM projects";
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, unionInjectionProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesUnionBasedSQLInjectionInTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String unionInjectionTableId = "1 UNION SELECT * FROM table_metadata";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, unionInjectionTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesCommentBasedSQLInjectionInProjectId() {
+        String userId = "user-1";
+        String commentInjectionProjectId = "1/*comment*/";
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, commentInjectionProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesCommentBasedSQLInjectionInTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String commentInjectionTableId = "1/*comment*/";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, commentInjectionTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesSpecialCharactersInProjectId() {
+        String userId = "user-1";
+        String specialCharsProjectId = "1;2;3";
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, specialCharsProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesSpecialCharactersInTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String specialCharsTableId = "1;2;3";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, specialCharsTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesUnicodeCharactersInProjectId() {
+        String userId = "user-1";
+        String unicodeProjectId = "1\u0000";
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, unicodeProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesUnicodeCharactersInTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String unicodeTableId = "1\u0000";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, unicodeTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesExtremelyLongProjectId() {
+        String userId = "user-1";
+        String longProjectId = "1".repeat(10000);
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, longProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesExtremelyLongTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String longTableId = "1".repeat(10000);
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, longTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesWhitespaceOnlyProjectId() {
+        String userId = "user-1";
+        String whitespaceProjectId = "   ";
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, whitespaceProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesWhitespaceOnlyTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String whitespaceTableId = "   ";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, whitespaceTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesTabAndNewlineInProjectId() {
+        String userId = "user-1";
+        String tabNewlineProjectId = "\t\n123\t\n";
+        String tableId = "456";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, tabNewlineProjectId, tableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesTabAndNewlineInTableId() {
+        String userId = "user-1";
+        String projectId = "123";
+        String tabNewlineTableId = "\t\n456\t\n";
+
+        assertThrows(NumberFormatException.class, () -> orchestrator.deleteTable(userId, projectId, tabNewlineTableId));
+        verifyNoInteractions(tableMetadataService);
+    }
+
+    @Test
+    void deleteTable_handlesMaliciousUserId() {
+        String maliciousUserId = "'; DROP TABLE users; --";
+        String projectId = "123";
+        String tableId = "456";
+
+        doThrow(new IllegalArgumentException("Invalid user ID")).when(tableMetadataService).deleteTable(maliciousUserId, 123L, 456L);
+
+        assertThrows(IllegalArgumentException.class, () -> orchestrator.deleteTable(maliciousUserId, projectId, tableId));
+        verify(tableMetadataService).deleteTable(maliciousUserId, 123L, 456L);
+    }
+
+    @Test
+    void deleteTable_handlesSQLInjectionInUserId() {
+        String sqlInjectionUserId = "1' OR '1'='1";
+        String projectId = "123";
+        String tableId = "456";
+
+        doThrow(new IllegalArgumentException("Invalid user ID")).when(tableMetadataService).deleteTable(sqlInjectionUserId, 123L, 456L);
+
+        assertThrows(IllegalArgumentException.class, () -> orchestrator.deleteTable(sqlInjectionUserId, projectId, tableId));
+        verify(tableMetadataService).deleteTable(sqlInjectionUserId, 123L, 456L);
+    }
+
+    @Test
+    void deleteTable_handlesExtremelyLongUserId() {
+        String longUserId = "A".repeat(10000);
+        String projectId = "123";
+        String tableId = "456";
+
+        doThrow(new IllegalArgumentException("User ID too long")).when(tableMetadataService).deleteTable(longUserId, 123L, 456L);
+
+        assertThrows(IllegalArgumentException.class, () -> orchestrator.deleteTable(longUserId, projectId, tableId));
+        verify(tableMetadataService).deleteTable(longUserId, 123L, 456L);
+    }
+
+    @Test
+    void deleteTable_handlesSpecialCharactersInUserId() {
+        String specialCharsUserId = "user@#$%^&*()";
+        String projectId = "123";
+        String tableId = "456";
+
+        doThrow(new IllegalArgumentException("Invalid characters in user ID")).when(tableMetadataService).deleteTable(specialCharsUserId, 123L, 456L);
+
+        assertThrows(IllegalArgumentException.class, () -> orchestrator.deleteTable(specialCharsUserId, projectId, tableId));
+        verify(tableMetadataService).deleteTable(specialCharsUserId, 123L, 456L);
+    }
+
+    // ==================== AUTHORIZATION AND ACCESS CONTROL TESTS ====================
+
+    @Test
+    void deleteProject_preventsUnauthorizedAccess() {
+        String unauthorizedUserId = "unauthorized-user";
+        String projectId = "123";
+
+        // Simulate that the project exists but doesn't belong to the user
+        doThrow(new ProjectNotFoundException(123L)).when(projectService).deleteProject(unauthorizedUserId, 123L);
+
+        assertThrows(ProjectNotFoundException.class, () -> orchestrator.deleteProject(unauthorizedUserId, projectId));
+        verify(projectService).deleteProject(unauthorizedUserId, 123L);
+    }
+
+    @Test
+    void deleteTable_preventsUnauthorizedAccess() {
+        String unauthorizedUserId = "unauthorized-user";
+        String projectId = "123";
+        String tableId = "456";
+
+        // Simulate that the table exists but doesn't belong to the user's project
+        doThrow(new TableNotFoundException()).when(tableMetadataService).deleteTable(unauthorizedUserId, 123L, 456L);
+
+        assertThrows(TableNotFoundException.class, () -> orchestrator.deleteTable(unauthorizedUserId, projectId, tableId));
+        verify(tableMetadataService).deleteTable(unauthorizedUserId, 123L, 456L);
+    }
+
+    @Test
+    void deleteProject_handlesCaseInsensitiveUserId() {
+        String userId = "User-1";
+        String projectId = "123";
+
+        doThrow(new ProjectNotFoundException(123L)).when(projectService).deleteProject(userId, 123L);
+
+        assertThrows(ProjectNotFoundException.class, () -> orchestrator.deleteProject(userId, projectId));
+        verify(projectService).deleteProject(userId, 123L);
+    }
+
+    @Test
+    void deleteTable_handlesCaseInsensitiveUserId() {
+        String userId = "User-1";
+        String projectId = "123";
+        String tableId = "456";
+
+        doThrow(new TableNotFoundException()).when(tableMetadataService).deleteTable(userId, 123L, 456L);
+
+        assertThrows(TableNotFoundException.class, () -> orchestrator.deleteTable(userId, projectId, tableId));
+        verify(tableMetadataService).deleteTable(userId, 123L, 456L);
+    }
+
+    // ==================== EDGE CASE AND BOUNDARY TESTS ====================
+
+    @Test
+    void deleteProject_handlesMinimumValidProjectId() {
+        String userId = "user-1";
+        String minProjectId = "1";
+
+        String result = orchestrator.deleteProject(userId, minProjectId);
+
+        assertEquals("Success", result);
+        verify(projectService).deleteProject(userId, 1L);
+    }
+
+    @Test
+    void deleteTable_handlesMinimumValidIds() {
+        String userId = "user-1";
+        String minProjectId = "1";
+        String minTableId = "1";
+
+        String result = orchestrator.deleteTable(userId, minProjectId, minTableId);
+
+        assertEquals("Success", result);
+        verify(tableMetadataService).deleteTable(userId, 1L, 1L);
+    }
+
+    @Test
+    void deleteProject_handlesMaximumValidProjectId() {
+        String userId = "user-1";
+        String maxProjectId = String.valueOf(Long.MAX_VALUE);
+
+        doThrow(new ProjectNotFoundException(Long.MAX_VALUE)).when(projectService).deleteProject(userId, Long.MAX_VALUE);
+
+        assertThrows(ProjectNotFoundException.class, () -> orchestrator.deleteProject(userId, maxProjectId));
+        verify(projectService).deleteProject(userId, Long.MAX_VALUE);
+    }
+
+    @Test
+    void deleteTable_handlesMaximumValidIds() {
+        String userId = "user-1";
+        String maxProjectId = String.valueOf(Long.MAX_VALUE);
+        String maxTableId = String.valueOf(Long.MAX_VALUE);
+
+        doThrow(new TableNotFoundException()).when(tableMetadataService).deleteTable(userId, Long.MAX_VALUE, Long.MAX_VALUE);
+
+        assertThrows(TableNotFoundException.class, () -> orchestrator.deleteTable(userId, maxProjectId, maxTableId));
+        verify(tableMetadataService).deleteTable(userId, Long.MAX_VALUE, Long.MAX_VALUE);
     }
 }

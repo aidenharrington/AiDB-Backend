@@ -21,8 +21,6 @@ public class UserController extends BaseController {
     @PostMapping
     public ResponseEntity<APIResponse<UserDTO>> setupNewUser(@RequestHeader("Authorization") String authToken) throws Exception {
         return handleRequest(authToken,
-                null,
-                -1,
                 (userId, args) -> userOrchestrator.setupNewUser(userId)
         );
     }

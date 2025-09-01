@@ -13,6 +13,7 @@ import com.aidb.aidb_backend.service.util.sql.ProjectConversionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,13 +23,19 @@ import java.util.Set;
 public class ProjectService {
 
     @Autowired
-    private ProjectRepository projectRepository;
+    ProjectRepository projectRepository;
 
     @Autowired
-    private SnowflakeIdGenerator snowflakeIdGenerator;
+    TableMetadataRepository tableMetadataRepository;
+
+    @Autowired
+    SnowflakeIdGenerator snowflakeIdGenerator;
 
     @Autowired
     ProjectConversionService projectConversionService;
+
+    @Autowired
+    TableMetadataService tableMetadataService;
 
 
     public List<ProjectOverviewDTO> getProjectOverviewDTOs(String userId) {
@@ -57,6 +64,25 @@ public class ProjectService {
         project.setCreatedAt(Instant.now());
 
         return projectRepository.save(project);
+    }
+
+    @Transactional
+    public void deleteProject(String userId, Long projectId) {
+        // Verify ownership
+        if (!projectRepository.existsByIdAndUserId(projectId, userId)) {
+            throw new ProjectNotFoundException(projectId);
+        }
+
+        // Get all the table IDs for this project
+        List<Long> tableIds = tableMetadataRepository.findIdsByProjectIdAndUserId(projectId, userId);
+
+        // Delete all tables
+        for (Long tableId : tableIds) {
+            tableMetadataService.deleteTableHelper(tableId);
+        }
+
+        // Finally, delete the row
+        projectRepository.deleteById(projectId);
     }
 
 

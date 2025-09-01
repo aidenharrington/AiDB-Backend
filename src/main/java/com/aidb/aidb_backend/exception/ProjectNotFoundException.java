@@ -6,6 +6,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 public class ProjectNotFoundException extends ResourceNotFoundException {
     public ProjectNotFoundException(Long projectId) {
-        super("Project not found with id: " + projectId);
+        super("Project not found with id: " + projectId.toString());
     }
 }

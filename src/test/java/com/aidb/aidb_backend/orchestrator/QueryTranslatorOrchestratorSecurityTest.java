@@ -67,9 +67,9 @@ class QueryTranslatorOrchestratorSecurityTest {
         
         when(queryService.getQueryById(queryId)).thenReturn(query);
         
-        Query result = orchestrator.getQueryById(userId, queryId);
+        QueryDTO result = orchestrator.getQueryById(userId, queryId);
         
-        assertSame(query, result);
+        assertEquals(userId, result.getUserId());
         verify(queryService).getQueryById(queryId);
     }
 
@@ -84,9 +84,9 @@ class QueryTranslatorOrchestratorSecurityTest {
         
         when(queryService.getQueryById(queryId)).thenReturn(query);
         
-        Query result = orchestrator.getQueryById(userId, queryId);
+        QueryDTO result = orchestrator.getQueryById(userId, queryId);
         
-        assertSame(query, result);
+        assertEquals("user-1", result.getUserId());
         verify(queryService).getQueryById(queryId);
     }
 
@@ -154,12 +154,12 @@ class QueryTranslatorOrchestratorSecurityTest {
         when(openAiClient.getSqlTranslation("'; DROP TABLE users; --"))
             .thenReturn("SELECT 1"); // AI should sanitize/ignore malicious input
         
-        Query result = orchestrator.translateToSql(userId, query);
+        QueryDTO result = orchestrator.translateToSql(userId, query);
         
         assertEquals(userId, result.getUserId());
         assertEquals("SELECT 1", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService).addQuery(result);
+        verify(queryService).addQuery(any(Query.class));
     }
 
     @Test
@@ -172,12 +172,12 @@ class QueryTranslatorOrchestratorSecurityTest {
         when(openAiClient.getSqlTranslation(longQuery))
             .thenReturn("SELECT 1");
         
-        Query result = orchestrator.translateToSql(userId, query);
+        QueryDTO result = orchestrator.translateToSql(userId, query);
         
         assertEquals(userId, result.getUserId());
         assertEquals("SELECT 1", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService).addQuery(result);
+        verify(queryService).addQuery(any(Query.class));
     }
 
     @Test
@@ -189,12 +189,12 @@ class QueryTranslatorOrchestratorSecurityTest {
         when(openAiClient.getSqlTranslation("Find users with names containing äöü and symbols !@#$%^&*()"))
             .thenReturn("SELECT * FROM users WHERE name LIKE '%äöü%'");
         
-        Query result = orchestrator.translateToSql(userId, query);
+        QueryDTO result = orchestrator.translateToSql(userId, query);
         
         assertEquals(userId, result.getUserId());
         assertEquals("SELECT * FROM users WHERE name LIKE '%äöü%'", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService).addQuery(result);
+        verify(queryService).addQuery(any(Query.class));
     }
 
     @Test
@@ -206,12 +206,12 @@ class QueryTranslatorOrchestratorSecurityTest {
         when(openAiClient.getSqlTranslation(""))
             .thenReturn(""); // AI might return empty for empty input
         
-        Query result = orchestrator.translateToSql(userId, query);
+        QueryDTO result = orchestrator.translateToSql(userId, query);
         
         assertEquals(userId, result.getUserId());
         assertEquals("", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService).addQuery(result);
+        verify(queryService).addQuery(any(Query.class));
     }
 
     @Test
@@ -223,12 +223,12 @@ class QueryTranslatorOrchestratorSecurityTest {
         when(openAiClient.getSqlTranslation(null))
             .thenReturn("SELECT 1"); // AI handles null gracefully
         
-        Query result = orchestrator.translateToSql(userId, query);
+        QueryDTO result = orchestrator.translateToSql(userId, query);
         
         assertEquals(userId, result.getUserId());
         assertEquals("SELECT 1", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService).addQuery(result);
+        verify(queryService).addQuery(any(Query.class));
     }
 
     // API Security Tests
@@ -322,12 +322,12 @@ class QueryTranslatorOrchestratorSecurityTest {
         when(openAiClient.getSqlTranslation("Get all users")).thenReturn("SELECT * FROM users");
         doThrow(new RuntimeException("Database save failed")).when(queryService).addQuery(any());
         
-        Query result = orchestrator.translateToSql(userId, query);
+        QueryDTO result = orchestrator.translateToSql(userId, query);
         
         assertEquals(userId, result.getUserId());
         assertEquals("SELECT * FROM users", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService).addQuery(result);
+        verify(queryService).addQuery(any(Query.class));
     }
 
     @Test
@@ -337,12 +337,12 @@ class QueryTranslatorOrchestratorSecurityTest {
         
         when(openAiClient.getSqlTranslation("Get all users")).thenReturn("SELECT * FROM users");
         
-        Query result = orchestrator.translateToSql(null, query);
+        QueryDTO result = orchestrator.translateToSql(null, query);
         
         assertNull(result.getUserId());
         assertEquals("SELECT * FROM users", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService).addQuery(result);
+        verify(queryService).addQuery(any(Query.class));
     }
 
     @Test
@@ -353,12 +353,12 @@ class QueryTranslatorOrchestratorSecurityTest {
         
         when(openAiClient.getSqlTranslation("Get all users")).thenReturn("SELECT * FROM users");
         
-        Query result = orchestrator.translateToSql(userId, query);
+        QueryDTO result = orchestrator.translateToSql(userId, query);
         
         assertEquals("", result.getUserId());
         assertEquals("SELECT * FROM users", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService).addQuery(result);
+        verify(queryService).addQuery(any(Query.class));
     }
 
     @Test

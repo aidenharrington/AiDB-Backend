@@ -62,6 +62,8 @@ public class ExcelUploadService {
             tableMetadata.setCreatedAt(Instant.now());
             tableMetadataRepository.save(tableMetadata);
 
+            tableDto.setId(tableMetadata.getId().toString());
+
             // Save metadata: Columns
             for (TableDTO.ColumnDTO columnDto : tableDto.getColumns()) {
                 ColumnMetadata columnMetadata = new ColumnMetadata();
@@ -70,6 +72,7 @@ public class ExcelUploadService {
                 columnMetadata.setName(columnDto.getName());
                 columnMetadata.setType(columnDto.getType().name());
                 columnMetadataRepository.save(columnMetadata);
+
             }
 
             // Create physical table
