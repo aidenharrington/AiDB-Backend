@@ -39,7 +39,7 @@ public class ProjectService {
         return projectRepository.findProjectOverviewDTO(userId, projectId);
     }
 
-    public Project getProject(String userId, Long projectId) {
+    private Project getProject(String userId, Long projectId) {
         return projectRepository.findByIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
     }

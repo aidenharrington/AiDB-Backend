@@ -14,7 +14,9 @@ import java.util.Optional;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     @Query("SELECT new com.aidb.aidb_backend.model.dto.ProjectOverviewDTO(p.id, p.name, p.userId) " +
-            "FROM Project p WHERE p.userId = :userId")
+            "FROM Project p " +
+            "WHERE p.userId = :userId " +
+            "ORDER BY p.createdAt DESC")
     List<ProjectOverviewDTO> findProjectOverviewDTOs(@Param("userId") String userId);
 
     @Query("""
@@ -26,9 +28,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     """)
     ProjectOverviewDTO findProjectOverviewDTO(@Param("userId") String userId, @Param("projectId") Long projectId);
 
-
-
-    List<Project> findByUserId(String userId);
 
     Optional<Project> findByIdAndUserId(Long id, String userId);
 }
