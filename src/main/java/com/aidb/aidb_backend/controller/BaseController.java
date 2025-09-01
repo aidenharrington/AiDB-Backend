@@ -12,8 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
-import java.util.function.Function;
-
 public abstract class BaseController {
 
     @Autowired
@@ -25,6 +23,25 @@ public abstract class BaseController {
     private static final Logger logger = LoggerFactory.getLogger(BaseController.class);
 
     protected <T> ResponseEntity<APIResponse<T>> handleRequest(
+            String authToken,
+            ActionWithUserId<T> action,
+            Object... args) throws Exception {
+
+        // 1. Authorize user
+        String userId = firebaseAuthService.authorizeUser(authToken);
+
+
+        // 2. Execute the action with userId + extra args
+        T result = action.apply(userId, args);
+
+        // 3. Build response
+        PayloadMetadata meta = new PayloadMetadata(null);
+        APIResponse<T> apiResponse = new APIResponse<>(meta, result);
+
+        return ResponseEntity.ok(apiResponse);
+    }
+
+    protected <T> ResponseEntity<APIResponse<T>> handleRequestWithLimit(
             String authToken,
             LimitedOperation op,
             int opIncrementVal,

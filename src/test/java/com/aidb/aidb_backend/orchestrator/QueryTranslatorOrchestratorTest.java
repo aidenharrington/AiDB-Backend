@@ -41,12 +41,12 @@ class QueryTranslatorOrchestratorTest {
         query.setNlQuery("get all users");
         when(openAiClient.getSqlTranslation("get all users")).thenReturn("SELECT * FROM users");
 
-        Query result = orchestrator.translateToSql("user-1", query);
+        QueryDTO result = orchestrator.translateToSql("user-1", query);
 
         assertEquals("user-1", result.getUserId());
         assertEquals("SELECT * FROM users", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
-        verify(queryService, times(1)).addQuery(result);
+        verify(queryService, times(1)).addQuery(any(Query.class));
     }
 
     @Test
@@ -66,7 +66,7 @@ class QueryTranslatorOrchestratorTest {
         when(openAiClient.getSqlTranslation("ok")).thenReturn("SELECT 1");
         doThrow(new RuntimeException("fail")).when(queryService).addQuery(any(Query.class));
 
-        Query result = orchestrator.translateToSql("user-1", query);
+        QueryDTO result = orchestrator.translateToSql("user-1", query);
 
         assertEquals("SELECT 1", result.getSqlQuery());
         assertEquals(Status.TRANSLATED, result.getStatus());
@@ -86,8 +86,8 @@ class QueryTranslatorOrchestratorTest {
         Query q = new Query();
         q.setUserId("user-1");
         when(queryService.getQueryById("q1")).thenReturn(q);
-        Query result = orchestrator.getQueryById("user-1", "q1");
-        assertSame(q, result);
+        QueryDTO result = orchestrator.getQueryById("user-1", "q1");
+        assertEquals("user-1", result.getUserId());
     }
 
     @Test

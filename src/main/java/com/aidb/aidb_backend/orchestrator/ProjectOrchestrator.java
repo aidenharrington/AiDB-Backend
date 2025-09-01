@@ -39,6 +39,8 @@ public class ProjectOrchestrator {
     @Autowired
     ProjectConversionService projectConversionService;
 
+    private final String SUCCESS_RESPONSE = "Success";
+
 
     public ProjectDTO uploadExcel(String userId, String projectIdString, MultipartFile file) throws Exception {
         Long projectId = Long.valueOf(projectIdString);
@@ -69,5 +71,15 @@ public class ProjectOrchestrator {
 
     public List<ProjectOverviewDTO> getProjectOverviewDTOs(String userId) {
         return projectService.getProjectOverviewDTOs(userId);
+    }
+
+    public String deleteProject(String userId, String projectId) {
+        projectService.deleteProject(userId, Long.valueOf(projectId));
+        return SUCCESS_RESPONSE;
+    }
+
+    public String deleteTable(String userId, String projectId, String tableId) {
+        tableMetadataService.deleteTable(userId, Long.valueOf(projectId), Long.valueOf(tableId));
+        return SUCCESS_RESPONSE;
     }
 }

@@ -30,5 +30,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
 
     Optional<Project> findByIdAndUserId(Long id, String userId);
+
+    boolean existsByIdAndUserId(Long id, String userId);
 }
 

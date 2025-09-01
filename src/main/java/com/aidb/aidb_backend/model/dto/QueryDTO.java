@@ -29,6 +29,9 @@ public class QueryDTO {
     }
 
     private String formatTimestamp(Timestamp timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
         return timestamp
                 .toDate()
                 .toInstant()
