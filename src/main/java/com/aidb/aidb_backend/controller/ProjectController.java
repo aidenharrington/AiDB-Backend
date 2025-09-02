@@ -58,7 +58,7 @@ public class ProjectController extends BaseController {
         int excelDataRows = ExcelRowCounter.countRows(file);
 
         return handleRequestWithLimit(authToken,
-                LimitedOperation.PROJECT,
+                LimitedOperation.DATA_ROW,
                 excelDataRows,
                 (userId, args) ->
                         projectOrchestrator.uploadExcel(userId, projectId, file), projectId, file

@@ -12,13 +12,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 @Service
 public class UserLimitsService {
 
     @Autowired
-    Firestore firestore;
+    public Firestore firestore;
 
     private final String USER_LIMITS_COLLECTION = "user_limits";
 
@@ -84,5 +85,26 @@ public class UserLimitsService {
         }
     }
 
+    /**
+     * Resets usage fields for all users and updates lastUpdated timestamp.
+     * Data limit is not reset
+     * This method should only be called from scheduled reset.
+     */
+    public void resetUsageForAllUsers(Timestamp now) throws Exception {
+        ApiFuture<QuerySnapshot> query = firestore.collection(USER_LIMITS_COLLECTION).get();
+        List<QueryDocumentSnapshot> documents = query.get().getDocuments();
+
+        for (QueryDocumentSnapshot doc : documents) {
+            UserLimitsUsage usage = doc.toObject(UserLimitsUsage.class);
+            usage.setQueryLimitUsage(0L);
+            usage.setTranslationLimitUsage(0L);
+            usage.setProjectLimitUsage(0L);
+            usage.setLastUpdated(now);
+
+            firestore.collection(USER_LIMITS_COLLECTION)
+                    .document(usage.getId())
+                    .set(usage);
+        }
+    }
 
 }
