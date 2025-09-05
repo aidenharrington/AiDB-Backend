@@ -41,8 +41,8 @@ public class QueryTranslatorOrchestrator {
         return new QueryDTO(query);
     }
 
-    public List<QueryDTO> getAllQueryDTOs(String userId) throws ExecutionException, InterruptedException {
-        return queryService.getAllQueryDtos(userId);
+    public List<QueryDTO> getAllQueryDTOs(String userId, String projectId) throws ExecutionException, InterruptedException {
+        return queryService.getAllQueryDtos(userId, projectId);
     }
 
     public QueryDTO getQueryById(String userId, String queryId) throws ExecutionException, InterruptedException {

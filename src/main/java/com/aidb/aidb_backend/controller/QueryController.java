@@ -52,9 +52,10 @@ public class QueryController extends BaseController {
     }
 
     @GetMapping
-    public ResponseEntity<APIResponse<List<QueryDTO>>> getAllQueries(@RequestHeader("Authorization") String authToken) throws Exception {
+    public ResponseEntity<APIResponse<List<QueryDTO>>> getAllQueries(@RequestHeader("Authorization") String authToken,
+                                                                     @RequestParam String projectId) throws Exception {
         return handleRequest(authToken,
-                (userId, args) -> queryTranslatorOrchestrator.getAllQueryDTOs(userId)
+                (userId, args) -> queryTranslatorOrchestrator.getAllQueryDTOs(userId, projectId), projectId
         );
     }
 

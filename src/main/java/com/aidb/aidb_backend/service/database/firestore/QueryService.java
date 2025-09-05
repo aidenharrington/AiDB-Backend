@@ -64,7 +64,7 @@ public class QueryService {
         return snapshot.exists() ? snapshot.toObject(Query.class) : null;
     }
 
-    public List<QueryDTO> getAllQueryDtos(String userId) throws ExecutionException, InterruptedException {
+    public List<QueryDTO> getAllQueryDtos(String userId, String projectId) throws ExecutionException, InterruptedException {
         CollectionReference queriesRef = firestore.collection(QUERY_COLLECTION);
         ApiFuture<QuerySnapshot> future = queriesRef
                 .whereEqualTo(USER_ID, userId)

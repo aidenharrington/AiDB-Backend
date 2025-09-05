@@ -75,10 +75,10 @@ class QueryTranslatorOrchestratorTest {
 
     @Test
     void getAllQueryDTOs_delegatesToService() throws Exception {
-        when(queryService.getAllQueryDtos("user-1")).thenReturn(List.of(mock(QueryDTO.class)));
-        var dtos = orchestrator.getAllQueryDTOs("user-1");
+        when(queryService.getAllQueryDtos("user-1", "1234")).thenReturn(List.of(mock(QueryDTO.class)));
+        var dtos = orchestrator.getAllQueryDTOs("user-1", "1234");
         assertEquals(1, dtos.size());
-        verify(queryService).getAllQueryDtos("user-1");
+        verify(queryService).getAllQueryDtos("user-1", "1234");
     }
 
     @Test

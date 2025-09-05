@@ -13,7 +13,7 @@ public class Query {
 
     private String userId;
 
-    private Long projectId;
+    private String projectId;
 
     private String nlQuery;
 
@@ -28,7 +28,7 @@ public class Query {
     public Query(QueryDTO dto) {
         this.id = dto.getId();
         this.userId = dto.getUserId();
-        this.projectId = dto.getProjectId() != null ? Long.valueOf(dto.getProjectId()) : null;
+        this.projectId = dto.getProjectId() != null ? dto.getProjectId() : null;
         this.nlQuery = dto.getNlQuery();
         this.sqlQuery = dto.getSqlQuery();
         this.status = dto.getStatus();

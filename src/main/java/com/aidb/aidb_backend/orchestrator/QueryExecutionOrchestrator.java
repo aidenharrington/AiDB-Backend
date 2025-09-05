@@ -2,6 +2,7 @@ package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.exception.IllegalSqlException;
 import com.aidb.aidb_backend.exception.ProjectNotFoundException;
+import com.aidb.aidb_backend.exception.TableNotFoundException;
 import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.model.firestore.Status;
@@ -43,10 +44,10 @@ public class QueryExecutionOrchestrator {
     public List<Map<String, Object>> executeSafeSelectQuery(String userId, QueryDTO queryDTO) throws JSQLParserException {
         Query query = new Query(queryDTO);
         query.setUserId(userId);
-        Map<String, String> tableNameMapping = tableMetadataService.getTableNameMapping(userId, query.getProjectId());
+        Map<String, String> tableNameMapping = tableMetadataService.getTableNameMapping(userId, Long.valueOf(query.getProjectId()));
 
         if (tableNameMapping == null || tableNameMapping.isEmpty()) {
-            throw new ProjectNotFoundException(query.getProjectId());
+            throw new TableNotFoundException();
         }
 
 

@@ -2,6 +2,7 @@ package com.aidb.aidb_backend.orchestrator;
 
 import com.aidb.aidb_backend.exception.IllegalSqlException;
 import com.aidb.aidb_backend.exception.ProjectNotFoundException;
+import com.aidb.aidb_backend.exception.TableNotFoundException;
 import com.aidb.aidb_backend.model.dto.QueryDTO;
 import com.aidb.aidb_backend.model.firestore.Query;
 import com.aidb.aidb_backend.model.firestore.Status;
@@ -122,27 +123,27 @@ class QueryExecutionOrchestratorTest {
     }
 
     @Test
-    void executeSafeSelectQuery_throwsProjectNotFoundWhenNoTableMapping() throws Exception {
+    void executeSafeSelectQuery_throwsTableNotFoundWhenNoTableMapping() throws Exception {
         QueryDTO queryDTO = new QueryDTO();
         queryDTO.setSqlQuery("SELECT 1");
         queryDTO.setProjectId("999");
         
         when(tableMetadataService.getTableNameMapping("user-1", 999L)).thenReturn(null);
         
-        assertThrows(ProjectNotFoundException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
+        assertThrows(TableNotFoundException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
         verifyNoInteractions(userQueryDataService);
         verify(queryService, never()).addOrUpdateQuery(any());
     }
 
     @Test
-    void executeSafeSelectQuery_throwsProjectNotFoundWhenEmptyTableMapping() throws Exception {
+    void executeSafeSelectQuery_throwsTableNotFoundWhenEmptyTableMapping() throws Exception {
         QueryDTO queryDTO = new QueryDTO();
         queryDTO.setSqlQuery("SELECT 1");
         queryDTO.setProjectId("999");
         
         when(tableMetadataService.getTableNameMapping("user-1", 999L)).thenReturn(Map.of());
         
-        assertThrows(ProjectNotFoundException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
+        assertThrows(TableNotFoundException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
         verifyNoInteractions(userQueryDataService);
         verify(queryService, never()).addOrUpdateQuery(any());
     }

@@ -275,41 +275,44 @@ class QueryTranslatorOrchestratorSecurityTest {
     @Test
     void getAllQueryDTOs_onlyReturnsUserOwnedQueries() throws Exception {
         String userId = "user-1";
+        String projectId = "1234";
         List<QueryDTO> userQueries = List.of(
             new QueryDTO(), // Assuming these belong to the user
             new QueryDTO()
         );
         
-        when(queryService.getAllQueryDtos(userId)).thenReturn(userQueries);
+        when(queryService.getAllQueryDtos(userId, projectId)).thenReturn(userQueries);
         
-        List<QueryDTO> result = orchestrator.getAllQueryDTOs(userId);
+        List<QueryDTO> result = orchestrator.getAllQueryDTOs(userId, projectId);
         
         assertSame(userQueries, result);
-        verify(queryService).getAllQueryDtos(userId);
+        verify(queryService).getAllQueryDtos(userId, projectId);
     }
 
     @Test
     void getAllQueryDTOs_handlesEmptyResult() throws Exception {
         String userId = "user-with-no-queries";
+        String projectId = "1234";
         List<QueryDTO> emptyList = List.of();
         
-        when(queryService.getAllQueryDtos(userId)).thenReturn(emptyList);
+        when(queryService.getAllQueryDtos(userId, projectId)).thenReturn(emptyList);
         
-        List<QueryDTO> result = orchestrator.getAllQueryDTOs(userId);
+        List<QueryDTO> result = orchestrator.getAllQueryDTOs(userId, projectId);
         
         assertTrue(result.isEmpty());
-        verify(queryService).getAllQueryDtos(userId);
+        verify(queryService).getAllQueryDtos(userId, projectId);
     }
 
     @Test
     void getAllQueryDTOs_handlesServiceException() throws Exception {
         String userId = "user-1";
+        String projectId = "1234";
         
-        when(queryService.getAllQueryDtos(userId))
+        when(queryService.getAllQueryDtos(userId, projectId))
             .thenThrow(new ExecutionException(new RuntimeException("Database error")));
         
-        assertThrows(ExecutionException.class, () -> orchestrator.getAllQueryDTOs(userId));
-        verify(queryService).getAllQueryDtos(userId);
+        assertThrows(ExecutionException.class, () -> orchestrator.getAllQueryDTOs(userId, projectId));
+        verify(queryService).getAllQueryDtos(userId, projectId);
     }
 
     // Error Handling and Resilience Tests
