@@ -28,7 +28,7 @@ public class ProjectController extends BaseController {
     @GetMapping
     public ResponseEntity<APIResponse<List<ProjectOverviewDTO>>> getProjects(@RequestHeader("Authorization") String authToken) throws Exception {
         return handleRequest(authToken,
-                (userId, args) -> projectOrchestrator.getProjectOverviewDTOs(userId)
+                (user, args) -> projectOrchestrator.getProjectOverviewDTOs(user.getUserId())
         );
     }
 
@@ -37,16 +37,16 @@ public class ProjectController extends BaseController {
         return handleRequestWithLimit(authToken,
                 LimitedOperation.PROJECT,
                 1,
-                (userId, args) ->
-                        projectOrchestrator.createProject(userId, projectCreateRequest), projectCreateRequest
+                (user, args) ->
+                        projectOrchestrator.createProject(user.getUserId(), projectCreateRequest), projectCreateRequest
         );
     }
 
     @GetMapping("/{projectId}")
     public ResponseEntity<APIResponse<ProjectDTO>> getProject(@RequestHeader("Authorization") String authToken, @PathVariable String projectId) throws Exception {
         return handleRequest(authToken,
-                (userId, args) ->
-                        projectOrchestrator.getProjectDTO(userId, projectId), projectId
+                (user, args) ->
+                        projectOrchestrator.getProjectDTO(user.getUserId(), projectId), projectId
                );
 
     }
@@ -60,8 +60,8 @@ public class ProjectController extends BaseController {
         return handleRequestWithLimit(authToken,
                 LimitedOperation.DATA_ROW,
                 excelDataRows,
-                (userId, args) ->
-                        projectOrchestrator.uploadExcel(userId, projectId, file), projectId, file
+                (user, args) ->
+                        projectOrchestrator.uploadExcel(user.getUserId(), projectId, file), projectId, file
             );
     }
 
@@ -71,8 +71,8 @@ public class ProjectController extends BaseController {
         return handleRequestWithLimit(authToken,
                 LimitedOperation.PROJECT,
                 -1,
-                (userId, args) ->
-                        projectOrchestrator.deleteProject(userId, projectId), projectId
+                (user, args) ->
+                        projectOrchestrator.deleteProject(user.getUserId(), projectId), projectId
         );
     }
 
@@ -83,8 +83,8 @@ public class ProjectController extends BaseController {
         return handleRequestWithLimit(authToken,
                 LimitedOperation.PROJECT,
                 -1,
-                (userId, args) ->
-                        projectOrchestrator.deleteTable(userId, projectId, tableId), projectId, tableId
+                (user, args) ->
+                        projectOrchestrator.deleteTable(user.getUserId(), projectId, tableId), projectId, tableId
         );
     }
 }
