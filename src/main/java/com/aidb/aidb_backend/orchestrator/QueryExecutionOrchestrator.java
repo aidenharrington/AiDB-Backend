@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +42,7 @@ public class QueryExecutionOrchestrator {
     TableMetadataService tableMetadataService;
 
 
-    public List<Map<String, Object>> executeSafeSelectQuery(String userId, QueryDTO queryDTO) throws JSQLParserException {
+    public List<Map<String, Object>> executeSafeSelectQuery(String userId, QueryDTO queryDTO) throws JSQLParserException, ExecutionException, InterruptedException {
         Query query = new Query(queryDTO);
         query.setUserId(userId);
         Map<String, String> tableNameMapping = tableMetadataService.getTableNameMapping(userId, Long.valueOf(query.getProjectId()));
@@ -56,7 +57,7 @@ public class QueryExecutionOrchestrator {
         List<Map<String, Object>> result = userQueryDataService.executeSql(sql);
 
         query.setStatus(Status.EXECUTED);
-        saveQueryGracefully(query);
+        queryService.addOrUpdateQuery(query);
 
         return result;
     }
@@ -82,34 +83,6 @@ public class QueryExecutionOrchestrator {
         return tableNameReplacer.replaceTables(sql);
     }
 
-    private String replaceTableNames(String sql, Map<String, String> tableNameMapping) {
-        // Pattern to capture the FROM clause and everything until next keyword or end
-        Pattern fromPattern = Pattern.compile("(?i)\\bFROM\\b\\s+(.+?)(?=\\bWHERE\\b|\\bGROUP\\b|\\bORDER\\b|$)");
-        Matcher matcher = fromPattern.matcher(sql);
-        StringBuffer sb = new StringBuffer();
-
-        while (matcher.find()) {
-            String fromContent = matcher.group(1).trim(); // e.g., "users u, contacts c"
-            String[] tables = fromContent.split(","); // split by commas
-
-            List<String> replacedTables = new ArrayList<>();
-            for (String tablePart : tables) {
-                tablePart = tablePart.trim();
-                String[] parts = tablePart.split("\\s+"); // split by whitespace
-                String displayName = parts[0];
-                String aliasPart = tablePart.substring(displayName.length()); // preserve everything after table name
-
-                String physicalName = tableNameMapping.getOrDefault(displayName, displayName);
-                replacedTables.add(physicalName + aliasPart);
-            }
-
-            // Reconstruct the FROM clause
-            matcher.appendReplacement(sb, "FROM " + String.join(", ", replacedTables));
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
-    }
-
 
     private boolean containsUnsafeKeywords(String sql) {
         String lower = sql.toLowerCase();
@@ -125,13 +98,5 @@ public class QueryExecutionOrchestrator {
                 lower.contains("exec ") ||
                 lower.contains(";") ||     // Disallow multiple statements
                 lower.contains("--");      // Disallow comment injection
-    }
-
-    private void saveQueryGracefully(Query query) {
-        try {
-            queryService.addOrUpdateQuery(query);
-        } catch (Exception e) {
-            logger.error("{}{}", "Failed saving query gracefully.", e.getMessage());
-        }
     }
 }

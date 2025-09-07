@@ -28,7 +28,7 @@ public class Query {
     public Query(QueryDTO dto) {
         this.id = dto.getId();
         this.userId = dto.getUserId();
-        this.projectId = dto.getProjectId() != null ? dto.getProjectId() : null;
+        this.projectId = dto.getProjectId();
         this.nlQuery = dto.getNlQuery();
         this.sqlQuery = dto.getSqlQuery();
         this.status = dto.getStatus();

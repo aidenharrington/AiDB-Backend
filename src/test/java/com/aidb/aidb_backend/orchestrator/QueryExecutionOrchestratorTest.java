@@ -106,7 +106,7 @@ class QueryExecutionOrchestratorTest {
     }
 
     @Test
-    void executeSafeSelectQuery_saveGracefully_swallowsExceptions() throws Exception {
+    void executeSafeSelectQuery_throwsExceptionWhenSaveFails() throws Exception {
         QueryDTO queryDTO = new QueryDTO();
         queryDTO.setSqlQuery("SELECT 1");
         queryDTO.setProjectId("123");
@@ -116,9 +116,7 @@ class QueryExecutionOrchestratorTest {
         doThrow(new RuntimeException("fail")).when(queryService).addOrUpdateQuery(any(Query.class));
         when(userQueryDataService.executeSql("SELECT 1")).thenReturn(List.of());
 
-        List<Map<String, Object>> result = orchestrator.executeSafeSelectQuery("user-1", queryDTO);
-
-        assertNotNull(result);
+        assertThrows(RuntimeException.class, () -> orchestrator.executeSafeSelectQuery("user-1", queryDTO));
         verify(queryService, times(1)).addOrUpdateQuery(any(Query.class));
     }
 

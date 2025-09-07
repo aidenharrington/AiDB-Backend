@@ -54,7 +54,7 @@ public abstract class BaseController {
         // 2. Get user tier info and verify limits
         TierInfo tierInfo = null;
         if (op != null) {
-            tierInfo = limitsOrchestrator.getUserTierInfo(user);
+            tierInfo = limitsOrchestrator.getUserTierInfo(user.getUserId());
             limitsOrchestrator.verifyLimit(tierInfo, op, opIncrementVal);
         }
 

@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -215,7 +216,7 @@ class QueryExecutionOrchestratorSecurityTest {
 
     // Table Name Mapping Security Tests
     @Test
-    void executeSafeSelectQuery_replacesTableNamesCorrectly() throws JSQLParserException {
+    void executeSafeSelectQuery_replacesTableNamesCorrectly() throws JSQLParserException, ExecutionException, InterruptedException {
         QueryDTO queryDTO = new QueryDTO();
         queryDTO.setSqlQuery("SELECT * FROM users WHERE id = 1");
         queryDTO.setProjectId("123");
