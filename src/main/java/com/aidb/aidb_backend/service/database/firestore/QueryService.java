@@ -26,14 +26,16 @@ public class QueryService {
 
     private static final String QUERY_COLLECTION  = "queries";
     private static final String USER_ID = "userId";
+    private static final String PROJECT_ID = "projectId";
     private static final String TIMESTAMP = "timestamp";
 
-    public String addQuery(Query query) throws ExecutionException, InterruptedException {
+    public Query addQuery(Query query) throws ExecutionException, InterruptedException {
         DocumentReference docRef = firestore.collection(QUERY_COLLECTION).document();
         query.setTimestamp(Timestamp.now());
         ApiFuture<WriteResult> future = docRef.set(query);
         future.get();
-        return docRef.getId();
+        query.setId(docRef.getId());
+        return query;
     }
 
     public String addOrUpdateQuery(Query query) throws ExecutionException, InterruptedException {
@@ -64,10 +66,11 @@ public class QueryService {
         return snapshot.exists() ? snapshot.toObject(Query.class) : null;
     }
 
-    public List<QueryDTO> getAllQueryDtos(String userId) throws ExecutionException, InterruptedException {
+    public List<QueryDTO> getAllQueryDTOs(String userId, String projectId) throws ExecutionException, InterruptedException {
         CollectionReference queriesRef = firestore.collection(QUERY_COLLECTION);
         ApiFuture<QuerySnapshot> future = queriesRef
                 .whereEqualTo(USER_ID, userId)
+                .whereEqualTo(PROJECT_ID, projectId)
                 .orderBy(TIMESTAMP, DESCENDING)
                 .get();
         List<QueryDocumentSnapshot> documents = future.get().getDocuments();

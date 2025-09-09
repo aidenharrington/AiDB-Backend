@@ -4,6 +4,7 @@ import com.aidb.aidb_backend.model.api.APIResponse;
 import com.aidb.aidb_backend.model.api.ActionWithUserId;
 import com.aidb.aidb_backend.model.api.PayloadMetadata;
 import com.aidb.aidb_backend.model.api.TierInfo;
+import com.aidb.aidb_backend.model.firestore.User;
 import com.aidb.aidb_backend.model.firestore.util.LimitedOperation;
 import com.aidb.aidb_backend.orchestrator.LimitsOrchestrator;
 import com.aidb.aidb_backend.security.authorization.FirebaseAuthService;
@@ -28,11 +29,10 @@ public abstract class BaseController {
             Object... args) throws Exception {
 
         // 1. Authorize user
-        String userId = firebaseAuthService.authorizeUser(authToken);
-
+        User user = firebaseAuthService.authorizeUser(authToken);
 
         // 2. Execute the action with userId + extra args
-        T result = action.apply(userId, args);
+        T result = action.apply(user, args);
 
         // 3. Build response
         PayloadMetadata meta = new PayloadMetadata(null);
@@ -49,18 +49,18 @@ public abstract class BaseController {
             Object... args) throws Exception {
 
         // 1. Authorize user
-        String userId = firebaseAuthService.authorizeUser(authToken);
+        User user = firebaseAuthService.authorizeUser(authToken);
 
         // 2. Get user tier info and verify limits
         TierInfo tierInfo = null;
         if (op != null) {
-            tierInfo = limitsOrchestrator.getUserTierInfo(userId);
+            tierInfo = limitsOrchestrator.getUserTierInfo(user.getUserId());
             limitsOrchestrator.verifyLimit(tierInfo, op, opIncrementVal);
         }
 
 
         // 3. Execute the action with userId + extra args
-        T result = action.apply(userId, args);
+        T result = action.apply(user, args);
 
         // 4. Update limit usage
         if (op != null && tierInfo != null) {
@@ -78,10 +78,10 @@ public abstract class BaseController {
                                                                        ActionWithUserId<T> action,
                                                                        Object... args) throws Exception {
         // 1. Authorize user
-        String userId = firebaseAuthService.authorizeUser(authToken);
+        User user = firebaseAuthService.authorizeUser(authToken);
 
         // 2. Execute the action with userId + extra args
-        T result = action.apply(userId, args);
+        T result = action.apply(user, args);
 
         // 3. Build response
         return ResponseEntity.ok(result);

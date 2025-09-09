@@ -39,10 +39,10 @@ class QueryServiceTest {
         when(documentReference.getId()).thenReturn("generated-id");
 
         // Act
-        String returnedId = queryService.addQuery(query);
+        Query returnedQuery = queryService.addQuery(query);
 
         // Assert
-        assertEquals("generated-id", returnedId);
+        assertEquals("generated-id", returnedQuery.getId());
         verify(documentReference).set(query);
     }
 

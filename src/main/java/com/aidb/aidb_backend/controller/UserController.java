@@ -1,14 +1,13 @@
 package com.aidb.aidb_backend.controller;
 
 import com.aidb.aidb_backend.model.api.APIResponse;
+import com.aidb.aidb_backend.model.dto.FeedbackDTO;
 import com.aidb.aidb_backend.model.dto.UserDTO;
 import com.aidb.aidb_backend.orchestrator.UserOrchestrator;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
@@ -21,7 +20,7 @@ public class UserController extends BaseController {
     @PostMapping
     public ResponseEntity<APIResponse<UserDTO>> setupNewUser(@RequestHeader("Authorization") String authToken) throws Exception {
         return handleRequest(authToken,
-                (userId, args) -> userOrchestrator.setupNewUser(userId)
+                (user, args) -> userOrchestrator.setupNewUser(user.getUserId())
         );
     }
 }

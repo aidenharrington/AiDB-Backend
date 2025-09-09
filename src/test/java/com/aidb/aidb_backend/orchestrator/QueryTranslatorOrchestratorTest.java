@@ -60,25 +60,22 @@ class QueryTranslatorOrchestratorTest {
     }
 
     @Test
-    void translateToSql_saveGracefully_swallowsExceptions() throws Exception {
+    void translateToSql_throwsExceptionWhenSaveFails() throws Exception {
         Query query = new Query();
         query.setNlQuery("ok");
         when(openAiClient.getSqlTranslation("ok")).thenReturn("SELECT 1");
         doThrow(new RuntimeException("fail")).when(queryService).addQuery(any(Query.class));
 
-        QueryDTO result = orchestrator.translateToSql("user-1", query);
-
-        assertEquals("SELECT 1", result.getSqlQuery());
-        assertEquals(Status.TRANSLATED, result.getStatus());
+        assertThrows(RuntimeException.class, () -> orchestrator.translateToSql("user-1", query));
         verify(queryService, times(1)).addQuery(any(Query.class));
     }
 
     @Test
     void getAllQueryDTOs_delegatesToService() throws Exception {
-        when(queryService.getAllQueryDtos("user-1")).thenReturn(List.of(mock(QueryDTO.class)));
-        var dtos = orchestrator.getAllQueryDTOs("user-1");
+        when(queryService.getAllQueryDTOs("user-1", "1234")).thenReturn(List.of(mock(QueryDTO.class)));
+        var dtos = orchestrator.getAllQueryDTOs("user-1", "1234");
         assertEquals(1, dtos.size());
-        verify(queryService).getAllQueryDtos("user-1");
+        verify(queryService).getAllQueryDTOs("user-1", "1234");
     }
 
     @Test

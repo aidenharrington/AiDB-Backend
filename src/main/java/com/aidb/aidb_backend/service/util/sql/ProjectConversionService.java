@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,7 +52,11 @@ public class ProjectConversionService {
 
         // Fetch actual table data via repository
         List<List<Object>> tableRows = dynamicTableRepository.fetchAllRows(table.getTableName()).stream()
-                .map(row -> new ArrayList<>(row.values()))
+                .map(row -> row.entrySet().stream()
+                        .filter(e -> !e.getKey().equalsIgnoreCase("id")) // skip the id column
+                        .map(Map.Entry::getValue)
+                        .collect(Collectors.toList())
+                )
                 .collect(Collectors.toList());
 
         dto.setRows(tableRows);
@@ -61,7 +66,7 @@ public class ProjectConversionService {
     private TableDTO.ColumnDTO convertColumnToTableColumnDTO(ColumnMetadata column) {
         TableDTO.ColumnDTO dto = new TableDTO.ColumnDTO();
         dto.setName(column.getName());
-        dto.setType(TableDTO.ColumnTypeDTO.TEXT);
+        dto.setType(TableDTO.ColumnTypeDTO.valueOf(column.getType()));
         return dto;
     }
 }

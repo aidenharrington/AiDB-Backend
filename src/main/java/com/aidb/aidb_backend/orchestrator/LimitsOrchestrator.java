@@ -3,6 +3,7 @@ package com.aidb.aidb_backend.orchestrator;
 import com.aidb.aidb_backend.exception.UserLimitExceededException;
 import com.aidb.aidb_backend.model.api.TierInfo;
 import com.aidb.aidb_backend.model.firestore.Tier;
+import com.aidb.aidb_backend.model.firestore.User;
 import com.aidb.aidb_backend.model.firestore.UserLimitsUsage;
 import com.aidb.aidb_backend.model.firestore.util.LimitedOperation;
 import com.aidb.aidb_backend.service.database.firestore.TierService;

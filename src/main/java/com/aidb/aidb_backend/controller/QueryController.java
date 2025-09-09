@@ -36,8 +36,8 @@ public class QueryController extends BaseController {
         return handleRequestWithLimit(authToken,
                 LimitedOperation.TRANSLATION,
                 1,
-                (userId, args) ->
-                        queryTranslatorOrchestrator.translateToSql(userId, query), query
+                (user, args) ->
+                        queryTranslatorOrchestrator.translateToSql(user.getUserId(), query), query
         );
     }
 
@@ -46,23 +46,24 @@ public class QueryController extends BaseController {
         return handleRequestWithLimit(authToken,
                 LimitedOperation.QUERY,
                 1,
-                (userId, args) ->
-                        queryExecutionOrchestrator.executeSafeSelectQuery(userId, query), query
+                (user, args) ->
+                        queryExecutionOrchestrator.executeSafeSelectQuery(user.getUserId(), query), query
         );
     }
 
     @GetMapping
-    public ResponseEntity<APIResponse<List<QueryDTO>>> getAllQueries(@RequestHeader("Authorization") String authToken) throws Exception {
+    public ResponseEntity<APIResponse<List<QueryDTO>>> getAllQueries(@RequestHeader("Authorization") String authToken,
+                                                                     @RequestParam String projectId) throws Exception {
         return handleRequest(authToken,
-                (userId, args) -> queryTranslatorOrchestrator.getAllQueryDTOs(userId)
+                (user, args) -> queryTranslatorOrchestrator.getAllQueryDTOs(user.getUserId(), projectId), projectId
         );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<APIResponse<QueryDTO>> getQueryById(@RequestHeader("Authorization") String authToken, @PathVariable String id) throws Exception {
         return handleRequest(authToken,
-                (userId, args) ->
-                        queryTranslatorOrchestrator.getQueryById(userId, id), id
+                (user, args) ->
+                        queryTranslatorOrchestrator.getQueryById(user.getUserId(), id), id
         );
     }
 
