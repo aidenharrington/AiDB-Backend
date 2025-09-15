@@ -29,6 +29,7 @@ jobs:
           host: ${{ github.ref == 'refs/heads/main' && secrets.EC2_HOST_PROD || secrets.EC2_HOST_STAGE }}
           username: ec2-user
           key: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY || secrets.AIDB_STAGE_EC2_KEY }}
+          passphrase: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY_PASSPHRASE || secrets.AIDB_STAGE_EC2_KEY_PASSPHRASE }}
           script: |
             mkdir -p /home/ec2-user/aidb-backend
             sudo systemctl stop aidb-backend || true
@@ -39,6 +40,7 @@ jobs:
           host: ${{ github.ref == 'refs/heads/main' && secrets.EC2_HOST_PROD || secrets.EC2_HOST_STAGE }}
           username: ec2-user
           key: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY || secrets.AIDB_STAGE_EC2_KEY }}
+          passphrase: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY_PASSPHRASE || secrets.AIDB_STAGE_EC2_KEY_PASSPHRASE }}
           source: target/aidb-backend-0.0.1-SNAPSHOT.jar
           target: /home/ec2-user/aidb-backend/
           strip_components: 1
@@ -49,6 +51,7 @@ jobs:
           host: ${{ github.ref == 'refs/heads/main' && secrets.EC2_HOST_PROD || secrets.EC2_HOST_STAGE }}
           username: ec2-user
           key: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY || secrets.AIDB_STAGE_EC2_KEY }}
+          passphrase: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY_PASSPHRASE || secrets.AIDB_STAGE_EC2_KEY_PASSPHRASE }}
           script: |
             cd /home/ec2-user/aidb-backend
             mv aidb-backend-0.0.1-SNAPSHOT.jar aidb-backend.jar || true
