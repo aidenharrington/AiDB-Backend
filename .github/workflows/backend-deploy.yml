@@ -1,0 +1,59 @@
+name: Backend Deploy
+
+on:
+  push:
+    branches:
+      - stage
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Build Jar
+        run: ./mvnw clean package -DskipTests
+
+      - name: Create deployment directory on EC2
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ github.ref == 'refs/heads/main' && secrets.EC2_HOST_PROD || secrets.EC2_HOST_STAGE }}
+          username: ec2-user
+          key: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY || secrets.AIDB_STAGE_EC2_KEY }}
+          script: |
+            mkdir -p /home/ec2-user/aidb-backend
+            sudo systemctl stop aidb-backend || true
+
+      - name: Copy Jar to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ github.ref == 'refs/heads/main' && secrets.EC2_HOST_PROD || secrets.EC2_HOST_STAGE }}
+          username: ec2-user
+          key: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY || secrets.AIDB_STAGE_EC2_KEY }}
+          source: target/aidb-backend-0.0.1-SNAPSHOT.jar
+          target: /home/ec2-user/aidb-backend/
+          strip_components: 1
+
+      - name: Rename jar and restart service
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ github.ref == 'refs/heads/main' && secrets.EC2_HOST_PROD || secrets.EC2_HOST_STAGE }}
+          username: ec2-user
+          key: ${{ github.ref == 'refs/heads/main' && secrets.AIDB_PROD_EC2_KEY || secrets.AIDB_STAGE_EC2_KEY }}
+          script: |
+            cd /home/ec2-user/aidb-backend
+            mv aidb-backend-0.0.1-SNAPSHOT.jar aidb-backend.jar || true
+            sudo systemctl start aidb-backend
+            sudo systemctl status aidb-backend --no-pager
+            echo "Deployment complete! Checking if service is running..."
+            sleep 5
+            curl -f http://localhost:8080/actuator/health || echo "Health check failed - check logs with: sudo journalctl -u aidb-backend -f"
