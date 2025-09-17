@@ -1,8 +1,22 @@
+# Environment secrets
+.env.*
+
+# Firebase service account keys
+src/main/resources/firebase/*.json
+
+/src/main/resources/certificates
+/run-scripts
+
+
 HELP.md
+src/main/java/com/aidb/aidb_backend/.DS_Store
+src/main/java/com/aidb/aidb_backend/model/firestore/.DS_Store
 target/
+backend.log
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
 
 ### STS ###
 .apt_generated
@@ -31,3 +45,4 @@ build/
 
 ### VS Code ###
 .vscode/
+/src/main/resources/scripts/

@@ -1,0 +1,44 @@
+<configuration>
+
+    <!-- Console Appender for Development (console output) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for Stage and Production (log to file) -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>/var/log/aidb-backend/application-${spring.profile.active}.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Define the root logger for all environments (default INFO) -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- Override the root logger for the development profile -->
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- Override the root logger for the staging profile -->
+    <springProfile name="stage">
+        <root level="INFO">
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- Override the root logger for the production profile -->
+    <springProfile name="prod">
+        <root level="ERROR">
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>
