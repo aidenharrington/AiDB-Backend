@@ -25,15 +25,34 @@ public class UserLimitsService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserLimitsService.class);
 
-
+    // Get the users limits with exponential backoff delay to prevent race condition
     public UserLimitsUsage getUserLimitsById(String id) throws ExecutionException, InterruptedException {
-        DocumentSnapshot snapshot = firestore.collection(USER_LIMITS_COLLECTION).document(id).get().get();
+        int maxRetries = 3;
+        int baseDelayMs = 50; // Start with 50ms
 
-        if (snapshot.exists()) {
-            return snapshot.toObject(UserLimitsUsage.class);
-        } else {
-            throw new UserNotFoundException("Could not find user limit by id");
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                DocumentSnapshot snapshot = firestore.collection(USER_LIMITS_COLLECTION).document(id).get().get();
+
+                if (snapshot.exists()) {
+                    return snapshot.toObject(UserLimitsUsage.class);
+                }
+
+                // If document doesn't exist and we have retries left, wait and try again
+                if (attempt < maxRetries - 1) {
+                    int delayMs = baseDelayMs * (int) Math.pow(2, attempt); // Exponential backoff: 50ms, 100ms, 200ms
+                    Thread.sleep(delayMs);
+                    logger.debug("User limits not found for id: {}, retrying in {}ms (attempt {}/{})",
+                            id, delayMs, attempt + 1, maxRetries);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw e;
+            }
         }
+
+        logger.warn("User limits not found after {} attempts for id: {}", maxRetries, id);
+        throw new UserNotFoundException("Could not find user limit by id");
     }
 
     public String addUserLimits(UserLimitsUsage userLimitsUsage) throws ExecutionException, InterruptedException {
