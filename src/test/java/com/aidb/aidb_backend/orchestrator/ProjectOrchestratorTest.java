@@ -111,7 +111,7 @@ class ProjectOrchestratorTest {
 
         ProjectDTO projectData = new ProjectDTO();
         when(parserService.parseExcelFile(any(), any(), any())).thenReturn(projectData);
-        doThrow(new ExcelValidationException("invalid", null)).when(dataValidatorService).validateData(projectData);
+        doThrow(new ExcelValidationException("invalid")).when(dataValidatorService).validateData(projectData);
 
         assertThrows(ExcelValidationException.class, () -> orchestrator.uploadExcel(userId, String.valueOf(projectId), file));
         verify(excelUploadService, never()).upload(anyLong(), any());

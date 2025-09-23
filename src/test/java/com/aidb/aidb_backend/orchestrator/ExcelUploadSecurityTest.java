@@ -159,7 +159,7 @@ class ExcelUploadSecurityTest {
         when(parserService.parseExcelFile(eq(projectOverview), eq(tableNames), any())).thenReturn(projectData);
 
         // Simulate validation rejection of malicious content
-        doThrow(new ExcelValidationException("Malicious content detected", null))
+        doThrow(new ExcelValidationException("Malicious content detected?"))
                 .when(dataValidatorService).validateData(projectData);
 
         assertThrows(ExcelValidationException.class, () -> orchestrator.uploadExcel(USER_ID, PROJECT_ID, file));

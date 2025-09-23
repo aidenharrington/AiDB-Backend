@@ -9,9 +9,9 @@ public class ExcelValidationException extends HttpException {
 
     private final HttpStatus httpStatus;
 
-    public ExcelValidationException(String message, HttpStatus httpStatus) {
+    public ExcelValidationException(String message) {
         super(message);
-        this.httpStatus = httpStatus;
+        this.httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
     }
 
 
