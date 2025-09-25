@@ -32,7 +32,7 @@ public class ExcelSanitizerService {
         // Throw an error if sanitized value is empty or contains invalid characters
         if (sanitizedValue.isEmpty() || !sanitizedValue.matches(ALLOWED_CELL_CHARS_REGEX)) {
             String message = "Illegal character in cell: " + sanitizedValue;
-            throw new ExcelValidationException(message, HttpStatus.UNPROCESSABLE_ENTITY);
+            throw new ExcelValidationException(message);
         }
 
         return sanitizedValue;
@@ -40,7 +40,7 @@ public class ExcelSanitizerService {
 
     public static String formatDate(Date date) {
         if (date == null) {
-            throw new ExcelValidationException("Invalid date value: null", HttpStatus.BAD_REQUEST);
+            throw new ExcelValidationException("Invalid date value: null");
         }
 
         // Format the date as a string in the format that PostgreSQL accepts

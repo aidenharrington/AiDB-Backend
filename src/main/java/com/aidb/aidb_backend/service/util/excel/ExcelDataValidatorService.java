@@ -24,7 +24,7 @@ public class ExcelDataValidatorService {
                         int actualRowIdx = rowIdx + 1;
                         String message = "Validation failed for row " + actualRowIdx + ", column " + colIdx +
                                 ". Value: "+ cellValue + ". Expected type: "+ columnType;
-                        throw new ExcelValidationException(message, HttpStatus.UNPROCESSABLE_ENTITY);
+                        throw new ExcelValidationException(message);
                     }
                 }
             }
@@ -32,8 +32,9 @@ public class ExcelDataValidatorService {
     }
 
     private boolean validateCell(Object cellValue, TableDTO.ColumnTypeDTO columnType) {
+        // Allow empty cells, parser only captures correct rows
         if (cellValue == null) {
-            return false; // null is invalid unless you allow empty cells
+            return true;
         }
 
         return switch (columnType) {
